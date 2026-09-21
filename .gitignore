@@ -1,0 +1,5 @@
+# Datenverzeichnis, falls statt des Named Volume ein Bind-Mount benutzt wird
+pgdata/
+
+# Logs
+*.log

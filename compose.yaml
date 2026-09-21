@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:18.6
+    container_name: pg-kurs
+    environment:
+      POSTGRES_USER: kurs
+      POSTGRES_PASSWORD: kurs
+      POSTGRES_DB: kurs
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18 nutzt /var/lib/postgresql als Volume (PGDATA liegt in 18/docker).
+      - pgdata:/var/lib/postgresql
+      # Die SQL-Dateien dieses Repos liegen damit auch im Container unter /sql.
+      - ./sql:/sql:ro
+
+volumes:
+  pgdata:

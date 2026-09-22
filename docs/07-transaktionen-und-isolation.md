@@ -540,6 +540,10 @@ Nach einem `deadlock detected` gilt dasselbe wie nach jedem anderen Fehler:
 die betroffene Transaktion ist abgebrochen, `ROLLBACK` (oder `COMMIT`, siehe
 7.1).
 
+Das war das Phänomen. Der Betriebsteil — Verklemmungen im Serverlog finden,
+Wartezeiten mit `log_lock_waits` protokollieren, mit `NOWAIT` und `SKIP LOCKED`
+vermeiden statt behandeln — steht in Teil 9.
+
 ---
 
 ## 7.8 Isolationsstufen — was PostgreSQL wirklich macht

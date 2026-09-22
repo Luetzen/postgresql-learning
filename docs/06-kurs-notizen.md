@@ -10,6 +10,7 @@ Bereits als eigenes Dokument angelegt:
 
 - [7 — Transaktionen, Sperren und Isolationsstufen](07-transaktionen-und-isolation.md)
 - [8 — Timeouts: Anweisung, Transaktion, Sperre](08-timeouts.md)
+- [9 — Verklemmungen: erkennen, protokollieren, vermeiden](09-verklemmungen.md)
 
 ---
 
@@ -83,6 +84,17 @@ Ort: eigener Rechner · Datum: ____________________
 | Zählt die Wartezeit auf eine Sperre in `statement_timeout` mit? | |
 | Läuft `transaction_timeout` vor den beiden anderen ab? | |
 | Was stand nach dem `idle_in_transaction_session_timeout` in `konto`? | |
+
+### Verklemmungen
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| gesetztes `deadlock_timeout` im Versuch | |
+| Zeit bis `deadlock detected` | |
+| SQLSTATE (`\set VERBOSITY verbose`) | |
+| Log-Zeile im Container (`docker compose logs db`) — steht die Abfrage darin? | |
+| `log_lock_waits`: Zeile nach welcher Wartezeit? | |
+| `SKIP LOCKED`: was kam zurück, während die andere Sitzung sperrte? | |
 
 ---
 

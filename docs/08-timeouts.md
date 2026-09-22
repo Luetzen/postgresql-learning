@@ -29,7 +29,7 @@ Drei Dinge, die man daran typischerweise falsch versteht:
 - **`deadlock_timeout` gehört nicht in diese Reihe.** Es bricht nichts ab, es
   legt nur fest, wie lange gewartet wird, *bevor* geprüft wird, ob sich zwei
   Transaktionen gegenseitig blockieren. Deshalb steht es schon in 7.7 und nicht
-  hier.
+  hier — und der Betriebsteil dazu in Teil 9.
 - **Welche Meldung kommt, hängt davon ab, wie tief der Abbruch geht.** Eine
   Anweisung bricht mit `ERROR` ab, die Verbindung bleibt. Eine Sitzung bricht mit
   `FATAL` ab, die Verbindung ist weg:
@@ -236,6 +236,10 @@ RESET lock_timeout;
 ```
 
 Kommt der Fehler, hat man nichts verloren — aber auch nichts kaputtgemacht.
+
+Wichtig ist die Grenze: `lock_timeout` beendet das *Warten*, nicht die *Ursache*.
+Eine Verklemmung löst er nur zufällig auf — dafür ist die Deadlock-Erkennung da,
+und für die Vermeidung gibt es `NOWAIT` und `SKIP LOCKED` (Teil 9, 9.9).
 
 ---
 

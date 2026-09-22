@@ -11,6 +11,7 @@ Der Ablauf, den wir hier abbilden:
 5. Messen: Was kostet eine Abfrage **ohne** Index, was kostet sie **mit** Index/Constraint?
 6. **Zwei Sitzungen gleichzeitig**: Transaktionen, Sperren und Isolationsstufen
 7. **Timeouts**: Anweisung, Transaktion und Sperre zeitlich begrenzen
+8. **Verklemmungen**: im Log finden, protokollieren, mit `NOWAIT`/`SKIP LOCKED` vermeiden
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -43,6 +44,7 @@ docker compose version
 | 6 | [docs/06-kurs-notizen.md](docs/06-kurs-notizen.md) | Platz für die weiteren Kursinhalte |
 | 7 | [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md) | `konto`, zwei Sitzungen, Sperren, Serialisierungsfehler (40001) |
 | 8 | [docs/08-timeouts.md](docs/08-timeouts.md) | `statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`, `transaction_timeout` |
+| 9 | [docs/09-verklemmungen.md](docs/09-verklemmungen.md) | Deadlocks im Serverlog, `log_lock_waits`, `NOWAIT`, `SKIP LOCKED`, `40P01` |
 
 ---
 
@@ -105,6 +107,28 @@ RESET statement_timeout;
 ```
 
 Alle Timeouts: [docs/08-timeouts.md](docs/08-timeouts.md)
+
+---
+
+## Schnellstart (Teil 9 — Verklemmungen)
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/04_konto.sql    # konto aus Teil 7
+```
+
+Und dann in `psql` — zwei Fenster, **vorher** in beiden:
+
+```sql
+SET deadlock_timeout = '10s';
+```
+
+Deadlock auslösen wie in 7.7, danach im Log nachsehen:
+
+```bash
+docker compose logs db | tail -40
+```
+
+Ganze Übungen: [docs/09-verklemmungen.md](docs/09-verklemmungen.md)
 
 ---
 

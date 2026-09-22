@@ -244,6 +244,16 @@ Wichtig ist die Grenze: `lock_timeout` beendet das *Warten*, nicht die *Ursache*
 Eine Verklemmung löst er nur zufällig auf — dafür ist die Deadlock-Erkennung da,
 und für die Vermeidung gibt es `NOWAIT` und `SKIP LOCKED` (Teil 9, 9.9).
 
+Warum es ihn überhaupt braucht, sagt die Doku in Kapitel 13.3.4 sehr direkt:
+
+> Solange keine Verklemmung erkannt wird, wartet eine Transaktion auf die
+> Freigabe kollidierender Sperren **unbegrenzt**. Das bedeutet, dass es eine
+> schlechte Idee ist, Transaktionen lange offen zu halten (etwa während man auf
+> eine Benutzereingabe wartet).
+
+Ohne `lock_timeout` gibt es also keinen Fehler, den man behandeln könnte, nur
+Warten — und genau das ist 7.6 in Reinform.
+
 ---
 
 ## 8.5 `idle_session_timeout` und `transaction_timeout`

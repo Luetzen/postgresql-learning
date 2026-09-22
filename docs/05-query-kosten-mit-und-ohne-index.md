@@ -83,6 +83,10 @@ ANALYZE kurs;      -- Statistik aktualisieren, sonst plant der Server schlecht
 Statistiken sind wichtig: der Planer entscheidet anhand dieser Zahlen, ob er den
 Index benutzt. Ohne `ANALYZE` kann er sich vertun.
 
+> Ein Index kann übrigens auch **da** sein und trotzdem ignoriert werden: wenn
+> er `INVALID` ist. Das passiert beim Anlegen im laufenden Betrieb — siehe
+> Teil 11.
+
 Dieselbe Abfrage noch einmal:
 
 ```sql
@@ -199,6 +203,9 @@ DROP INDEX IF EXISTS idx_kurs_id;
 DROP INDEX IF EXISTS idx_kurs_name;
 ALTER TABLE kurs DROP CONSTRAINT IF EXISTS kurs_pkey;
 ```
+
+`DROP INDEX` ist auch die Aufräum-Anweisung aus Teil 11 — dort hinterlässt ein
+abgebrochener Concurrent-Build einen Index, der nie benutzt wird.
 
 Oder radikal die ganze Tabelle:
 

@@ -13,6 +13,7 @@ Der Ablauf, den wir hier abbilden:
 7. **Timeouts**: Anweisung, Transaktion und Sperre zeitlich begrenzen
 8. **Verklemmungen**: im Log finden, protokollieren, mit `NOWAIT`/`SKIP LOCKED` vermeiden
 9. **Warteereignisse**: worauf eine Sitzung wirklich wartet — und was „page locks" sind
+10. **Indizes im Betrieb**: `CONCURRENTLY`, `INVALID`, `REINDEX`
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -47,6 +48,7 @@ docker compose version
 | 8 | [docs/08-timeouts.md](docs/08-timeouts.md) | `statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`, `transaction_timeout` |
 | 9 | [docs/09-verklemmungen.md](docs/09-verklemmungen.md) | Deadlocks im Serverlog, `log_lock_waits`, `NOWAIT`, `SKIP LOCKED`, `40P01` |
 | 10 | [docs/10-warteereignisse.md](docs/10-warteereignisse.md) | `wait_event_type`, `pg_wait_events`, „page locks", Buffer-Pin |
+| 11 | [docs/11-indizes-im-betrieb.md](docs/11-indizes-im-betrieb.md) | `CREATE INDEX CONCURRENTLY`, `INVALID`, `REINDEX` |
 
 ---
 
@@ -153,6 +155,21 @@ SELECT pg_sleep(5);
 
 Erwartung in B: `Timeout` / `PgSleep`. Alle Übungen:
 [docs/10-warteereignisse.md](docs/10-warteereignisse.md)
+
+---
+
+## Schnellstart (Teil 11 — Indizes im Betrieb)
+
+```sql
+\d kurs
+CREATE INDEX CONCURRENTLY idx_kurs_cc ON kurs (id);
+-- nach ein paar Sekunden Strg+C: "canceling statement due to user request"
+\d kurs                                    -- jetzt: INVALID
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM kurs WHERE id = 3999999;   -- Seq Scan
+DROP INDEX idx_kurs_cc;
+```
+
+Alle Einzelheiten: [docs/11-indizes-im-betrieb.md](docs/11-indizes-im-betrieb.md)
 
 ---
 

@@ -490,6 +490,160 @@ Referenz: https://www.postgresql.org/docs/18/functions-info.html
 
 ---
 
+## 7.6c Tabellensperren und Sperrmodi
+
+Bis hierher ging es um **eine Zeile**: `UPDATE … WHERE id = 2` sperrt genau diese
+Zeile, eine zweite Sitzung wartet (7.6). Aber jede Anweisung nimmt zusätzlich eine
+Sperre auf die **ganze Tabelle** — und die entscheidet in der Praxis viel häufiger
+darüber, ob etwas wartet.
+
+Der Satz aus der Doku, der die größte Verwirrung auflöst:
+
+> Alle diese Sperrmodi sind Tabellensperren, auch wenn der Name das Wort „row"
+> enthält; die Namen sind historisch.
+
+`ROW EXCLUSIVE` ist also eine **Tabellen**sperre. Deshalb behindern sich zwei
+Sitzungen, die gleichzeitig einfügen, nicht.
+
+### Welche Anweisung nimmt welchen Modus
+
+| Anweisung | Tabellensperre |
+|-----------|----------------|
+| `SELECT` | `ACCESS SHARE` |
+| `SELECT … FOR UPDATE` / `FOR SHARE` | `ROW SHARE` |
+| `INSERT`, `UPDATE`, `DELETE`, `MERGE` | `ROW EXCLUSIVE` |
+| `VACUUM` (ohne `FULL`), `ANALYZE`, `CREATE INDEX CONCURRENTLY`, `CREATE STATISTICS`, `COMMENT ON`, `REINDEX CONCURRENTLY` | `SHARE UPDATE EXCLUSIVE` |
+| `CREATE INDEX` (ohne `CONCURRENTLY`) | `SHARE` |
+| `CREATE TRIGGER`, manche `ALTER TABLE` | `SHARE ROW EXCLUSIVE` |
+| `REFRESH MATERIALIZED VIEW CONCURRENTLY` | `EXCLUSIVE` |
+| `DROP TABLE`, `TRUNCATE`, `REINDEX`, `CLUSTER`, `VACUUM FULL`, `REFRESH MATERIALIZED VIEW`, viele `ALTER TABLE`/`ALTER INDEX` | `ACCESS EXCLUSIVE` |
+
+### Womit sie kollidieren
+
+Die vollständige Matrix steht in der Doku als Tabelle 13.2
+(https://www.postgresql.org/docs/18/explicit-locking.html). Als Liste ist sie
+leichter zu lesen — jeder Modus mit dem, womit er sich **nicht** verträgt:
+
+| Modus | kollidiert mit |
+|-------|----------------|
+| `ACCESS SHARE` | nur `ACCESS EXCLUSIVE` |
+| `ROW SHARE` | `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `ROW EXCLUSIVE` | `SHARE`, `SHARE ROW EXCLUSIVE`, `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `SHARE UPDATE EXCLUSIVE` | sich selbst, `SHARE`, `SHARE ROW EXCLUSIVE`, `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `SHARE` | `ROW EXCLUSIVE`, `SHARE UPDATE EXCLUSIVE`, `SHARE ROW EXCLUSIVE`, `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `SHARE ROW EXCLUSIVE` | `ROW EXCLUSIVE`, `SHARE UPDATE EXCLUSIVE`, `SHARE`, sich selbst, `EXCLUSIVE`, `ACCESS EXCLUSIVE` |
+| `EXCLUSIVE` | `ROW SHARE`, `ROW EXCLUSIVE`, `SHARE UPDATE EXCLUSIVE`, `SHARE`, `SHARE ROW EXCLUSIVE`, sich selbst, `ACCESS EXCLUSIVE` |
+| `ACCESS EXCLUSIVE` | alles |
+
+Zwei Sätze, die das Auswendiglernen ersetzen können:
+
+- **Nur `ACCESS EXCLUSIVE` blockiert ein `SELECT`.** Wer nicht gerade `DROP
+  TABLE`, `TRUNCATE`, `VACUUM FULL` oder `ALTER TABLE` macht, hält Leser nicht
+  auf.
+- **Manche Modi kollidieren mit sich selbst, andere nicht.** `ACCESS EXCLUSIVE`
+  kann nur einer halten, `ACCESS SHARE` beliebig viele. Und eine Transaktion
+  kollidiert nie mit sich selbst (siehe 7.6).
+
+### Übung: Leser gegen Schemaänderung
+
+**Fenster A:**
+
+```sql
+BEGIN;
+SELECT * FROM konto;
+-- Transaktion offen lassen
+```
+
+**Fenster B:**
+
+```sql
+ALTER TABLE konto ADD COLUMN notiz text;   -- hängt
+```
+
+Erwartung: B wartet. A hält `ACCESS SHARE` (vom `SELECT`), B will
+`ACCESS EXCLUSIVE` (vom `ALTER TABLE`) — und das kollidiert mit allem.
+
+Wer blockiert wen (wie in 7.6b):
+
+```sql
+SELECT pid, pg_blocking_pids(pid) AS blockiert_von, state
+FROM pg_stat_activity
+WHERE datname = 'kurs' AND cardinality(pg_blocking_pids(pid)) > 0;
+```
+
+Und die Sperren selbst — hier stehen endlich die **Modi**:
+
+```sql
+SELECT pid, mode, granted, locktype, relation::regclass
+FROM pg_locks
+WHERE relation = 'konto'::regclass;
+```
+
+Erwartung: für A eine Zeile mit `AccessShareLock` und `granted = true`, für B
+zusätzlich eine mit `AccessExclusiveLock` und `granted = false`. Die Namen sind
+etwas anders geschrieben als in der Tabelle oben (`AccessShareLock` statt
+`ACCESS SHARE`) — dieselben acht Modi.
+
+In Fenster A dann `COMMIT;` — und B läuft durch.
+
+Das ist der Grund für `lock_timeout` vor DDL in 8.4: ein `ALTER TABLE`, das hinter
+einer offenen Transaktion wartet, blockiert dahinter *jeden* Zugriff auf die
+Tabelle. Und für Indizes in Produktion gibt es die Variante ohne diese Sperre —
+siehe Teil 11.
+
+### Übung: zwei Schreibende, die sich nicht stören
+
+**Fenster A:**
+
+```sql
+BEGIN;
+UPDATE konto SET betrag = betrag + 1 WHERE id = 1;
+```
+
+**Fenster B, gleichzeitig:**
+
+```sql
+BEGIN;
+UPDATE konto SET betrag = betrag + 1 WHERE id = 2;
+```
+
+Erwartung: **keiner wartet.** Beide halten `ROW EXCLUSIVE` auf derselben Tabelle
+— ein Modus, der nicht mit sich selbst kollidiert — und je eine Zeilensperre auf
+einer *anderen* Zeile. Genau so funktioniert Nebenläufigkeit: die grobe Sperre
+teilen sie sich, die feine liegt auf getrennten Zeilen.
+
+### Die Zeilenmodi
+
+`FOR UPDATE` ist nicht der einzige Zeilenmodus. Es gibt vier, vom stärksten zum
+schwächsten (Doku 13.3.2, Konflikte in Tabelle 13.3):
+
+| Modus | wer nimmt ihn | kollidiert mit |
+|-------|---------------|----------------|
+| `FOR UPDATE` | `SELECT … FOR UPDATE`, jedes `DELETE`, jedes `UPDATE` auf eine Spalte mit unique-Index | allen anderen |
+| `FOR NO KEY UPDATE` | jedes `UPDATE`, das keinen `FOR UPDATE` nimmt | `FOR SHARE`, `FOR NO KEY UPDATE`, `FOR UPDATE` |
+| `FOR SHARE` | `SELECT … FOR SHARE` | `FOR NO KEY UPDATE`, `FOR UPDATE` |
+| `FOR KEY SHARE` | `SELECT … FOR KEY SHARE` | `FOR UPDATE` |
+
+Drei Merksätze:
+
+- **Zeilensperren behindern kein Lesen.** Sie blockieren „Schreiber und
+  Sperrende" auf derselben Zeile — ein `SELECT` ohne `FOR …` läuft immer.
+- Die schwächeren Modi existieren für **Fremdschlüssel**: eine Prüfung nimmt
+  `FOR KEY SHARE` und stört damit ein `UPDATE` auf eine Nicht-Schlüsselspalte
+  (`FOR NO KEY UPDATE`) nicht. Deshalb blockiert ein Fremdschlüssel nicht jede
+  Änderung an der Elternzeile.
+- Zeilensperren werden am Transaktionsende freigegeben — oder bei
+  `ROLLBACK TO SAVEPOINT`, genau wie Tabellensperren (siehe 7.4).
+
+Und eine Zahl, die man sich merken sollte: es gibt **keine Obergrenze** für
+gleichzeitig gesperrte Zeilen — die Sperre steckt in der Zeile selbst. Deshalb
+steht sie nicht in `pg_locks` (Teil 10, 10.5), und deshalb kann ein
+`SELECT … FOR UPDATE` Daten auf die Platte schreiben.
+
+Referenz: https://www.postgresql.org/docs/18/explicit-locking.html
+
+---
+
 ## 7.7 Verklemmung (Deadlock)
 
 Wenn zwei Transaktionen dieselben Zeilen in **umgekehrter Reihenfolge** sperren,

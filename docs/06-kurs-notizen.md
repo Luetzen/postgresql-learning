@@ -12,6 +12,7 @@ Bereits als eigenes Dokument angelegt:
 - [8 — Timeouts: Anweisung, Transaktion, Sperre](08-timeouts.md)
 - [9 — Verklemmungen: erkennen, protokollieren, vermeiden](09-verklemmungen.md)
 - [10 — Warteereignisse: worauf wartet eine Sitzung wirklich?](10-warteereignisse.md)
+- [11 — Indizes anlegen, ohne den Betrieb anzuhalten](11-indizes-im-betrieb.md)
 
 ---
 
@@ -111,6 +112,24 @@ Ort: eigener Rechner · Datum: ____________________
 |-------|--------------------|
 | Welche `backend_type`-Werte haben keine `datname`? | |
 | Steht bei der haltenden Sitzung (`SELECT FOR UPDATE …`) `Lock` / `transactionid`? | |
+
+### Sperrmodi (`pg_locks`)
+
+| Situation | `mode` | `granted` |
+|-----------|--------|-----------|
+| offener `SELECT` (Fenster A in 7.6c) | | |
+| wartendes `ALTER TABLE` (Fenster B) | | |
+| zwei `UPDATE` auf verschiedene Zeilen | | |
+
+### Indizes im Betrieb
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Laufzeit `CREATE INDEX CONCURRENTLY` auf `kurs`, bis zum Abbruch | |
+| Größe des `INVALID`-Index danach (`pg_indexes_size`) | |
+| Plan nach dem Abbruch: `Seq Scan` oder `Index Scan`? | |
+| Plan nach `DROP INDEX` + `ANALYZE` + neuem Build | |
+| Wartezeit des Builds (erste Phase mit nur einem `kurs`, zweite mit offener Transaktion) | |
 
 ---
 

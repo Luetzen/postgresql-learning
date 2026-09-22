@@ -352,6 +352,11 @@ Ein Deadlock sagt nichts über die Daten aus. Er sagt: *diese beiden Vorgänge
 hätten so nicht gleichzeitig laufen dürfen.* Beim nächsten Versuch ist die andere
 Transaktion durch, der Kreis entsteht nicht neu.
 
+Was man dabei **nicht** voraussetzen sollte, steht in der Doku: welche der
+beteiligten Transaktionen abgebrochen wird, ist schwer vorherzusagen. Wer sich
+darauf verlässt, dass es „schon die andere" trifft, verliert irgendwann die
+falsche.
+
 Dasselbe Muster wie bei `40001` in 7.11:
 
 ```text

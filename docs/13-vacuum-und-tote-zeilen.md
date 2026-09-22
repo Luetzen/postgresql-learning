@@ -356,8 +356,21 @@ ORDER BY alter DESC;
 
 `age()` sagt, wie viele Transaktionen seit dem ältesten nicht eingefrorenen
 Xid vergangen sind. Autovacuum wird aggressiv, wenn das zu groß wird
-(`autovacuum_freeze_max_age`). Für dieses Projekt ist das reine Theorie; wenn du
-tiefer willst, ist das ein eigenes Dokument.
+(`autovacuum_freeze_max_age`).
+
+Und es ist **keine** Theorie: in einem `VACUUM VERBOSE`-Bericht kann
+`frozen: … had … tuples frozen` stehen — Zeilen, die in diesem Lauf eingefroren
+wurden. Die Vorgabe `vacuum_freeze_min_age` liegt bei vielen Millionen
+Transaktionen, deshalb passiert das bei einer kleinen Übungstabelle normalerweise
+nicht. Wer es trotzdem sieht, hat `VACUUM FREEZE` benutzt oder den Parameter
+gesenkt:
+
+```sql
+SHOW vacuum_freeze_min_age;
+```
+
+Ist eine Seite eingefroren, steht im Bericht auch `all-frozen`. Das ist der
+Endzustand: eine solche Seite muss nie wieder angefasst werden.
 
 ---
 

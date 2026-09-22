@@ -224,8 +224,11 @@ Bei einer Verklemmung zeigt sie **zwei** Zeilen, deren `blockiert_von`-Werte
 aufeinander verweisen. Das ist derselbe Zyklus wie im `DETAIL` des Fehlers und
 im Log — nur eben live, bevor der Server eine der beiden abbricht.
 
-Detaillierter wird es mit `pg_locks`, wo *worauf* gewartet wird (Zeile, Tabelle,
-Transaktions-ID) — siehe 7.6b.
+Detaillierter wird es mit `pg_locks`: dort steht, welcher **Art** das Sperrobjekt
+ist (Tabelle, Transaktions-ID, Recht zum Erweitern einer Relation …). Zeilensperren
+stehen dort **nicht** — sie liegen auf der Platte und nicht im Speicher; der
+Wartende erscheint stattdessen als Warten auf die Transaktions-ID des Halters.
+Siehe 7.6b.
 
 ---
 

@@ -451,18 +451,40 @@ gerade legitim mitten in einer Arbeit stecken.
 Ohne die Funktion müsste man die Sperren selbst zusammenbauen: die wartende
 Sitzung in `pg_locks` mit `granted = false` suchen, die Sperre finden, auf die sie
 wartet, und dann die Sitzungen suchen, die dieselbe Sperre mit `granted = true`
-halten. `pg_blocking_pids()` macht genau diese Arbeit — und wertet dabei auch die
-Warteschlange aus, nicht nur die gerade gehaltenen Sperren.
+halten. Die Doku rät ausdrücklich davon ab („this is very difficult to get right
+in detail") und verweist auf `pg_blocking_pids()`: die Sicht kennt die
+Warteschlangenposition nicht und weiß nicht, welche parallelen Worker zu welcher
+Sitzung gehören.
 
-Ein Blick in `pg_locks` lohnt sich trotzdem einmal, weil man dort sieht, *worauf*
-gewartet wird — Zeile, Tabelle, Transaktions-ID:
+Ein Blick in `pg_locks` lohnt sich trotzdem — aber aus einem anderen Grund: man
+sieht dort, **welcher Art** das Sperrobjekt ist. Und dazu steht eine Einschränkung
+in der Doku, die viele überrascht:
+
+> Informationen über Zeilensperren liegen **auf der Platte**, nicht im Speicher —
+> deshalb erscheinen Zeilensperren normalerweise gar nicht in dieser Sicht.
+> Wartet eine Sitzung auf eine Zeilensperre, sieht man sie stattdessen auf die
+> **Transaktions-ID** des Halters warten.
+
+(Sinngemäß übersetzt aus https://www.postgresql.org/docs/18/view-pg-locks.html)
+
+Genau das kommt bei unserem Versuch heraus: keine Zeile und keine Seite, sondern
+`locktype = transactionid`. Die Transaktions-ID ist der Stellvertreter für die
+Zeilensperre.
 
 ```sql
-SELECT locktype, mode, granted, pid, relation::regclass
+SELECT locktype, mode, granted, pid, relation::regclass,
+       waitstart, age(now(), waitstart) AS wartet_seit
 FROM pg_locks
 WHERE pid = 1234
    OR pid = ANY (pg_blocking_pids(1234));
 ```
+
+`waitstart` steht auf `null`, solange die Sperre gehalten wird — und verrät beim
+Warten, seit wann. Das ist die Zahl, die man in `06-kurs-notizen.md` eintragen
+will.
+
+Was `Lock` als Warteereignis überhaupt ist, welche anderen es gibt und was
+dahinter „page locks" stecken, steht in Teil 10.
 
 Referenz: https://www.postgresql.org/docs/18/functions-info.html
 

@@ -12,6 +12,7 @@ Der Ablauf, den wir hier abbilden:
 6. **Zwei Sitzungen gleichzeitig**: Transaktionen, Sperren und Isolationsstufen
 7. **Timeouts**: Anweisung, Transaktion und Sperre zeitlich begrenzen
 8. **Verklemmungen**: im Log finden, protokollieren, mit `NOWAIT`/`SKIP LOCKED` vermeiden
+9. **Warteereignisse**: worauf eine Sitzung wirklich wartet — und was „page locks" sind
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -45,6 +46,7 @@ docker compose version
 | 7 | [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md) | `konto`, zwei Sitzungen, Sperren, Serialisierungsfehler (40001) |
 | 8 | [docs/08-timeouts.md](docs/08-timeouts.md) | `statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`, `transaction_timeout` |
 | 9 | [docs/09-verklemmungen.md](docs/09-verklemmungen.md) | Deadlocks im Serverlog, `log_lock_waits`, `NOWAIT`, `SKIP LOCKED`, `40P01` |
+| 10 | [docs/10-warteereignisse.md](docs/10-warteereignisse.md) | `wait_event_type`, `pg_wait_events`, „page locks", Buffer-Pin |
 
 ---
 
@@ -129,6 +131,28 @@ docker compose logs db | tail -40
 ```
 
 Ganze Übungen: [docs/09-verklemmungen.md](docs/09-verklemmungen.md)
+
+---
+
+## Schnellstart (Teil 10 — Warteereignisse)
+
+Zwei Fenster. In B beobachten:
+
+```sql
+SELECT pid, state, wait_event_type, wait_event, left(query, 40) AS query
+FROM pg_stat_activity
+WHERE backend_type = 'client backend';
+\watch 2
+```
+
+In A etwas tun, das wartet:
+
+```sql
+SELECT pg_sleep(5);
+```
+
+Erwartung in B: `Timeout` / `PgSleep`. Alle Übungen:
+[docs/10-warteereignisse.md](docs/10-warteereignisse.md)
 
 ---
 

@@ -11,6 +11,7 @@ Bereits als eigenes Dokument angelegt:
 - [7 — Transaktionen, Sperren und Isolationsstufen](07-transaktionen-und-isolation.md)
 - [8 — Timeouts: Anweisung, Transaktion, Sperre](08-timeouts.md)
 - [9 — Verklemmungen: erkennen, protokollieren, vermeiden](09-verklemmungen.md)
+- [10 — Warteereignisse: worauf wartet eine Sitzung wirklich?](10-warteereignisse.md)
 
 ---
 
@@ -95,6 +96,21 @@ Ort: eigener Rechner · Datum: ____________________
 | Log-Zeile im Container (`docker compose logs db`) — steht die Abfrage darin? | |
 | `log_lock_waits`: Zeile nach welcher Wartezeit? | |
 | `SKIP LOCKED`: was kam zurück, während die andere Sitzung sperrte? | |
+
+### Warteereignisse
+
+| Situation | `wait_event_type` | `wait_event` |
+|-----------|-------------------|--------------|
+| `SELECT pg_sleep(5);` läuft | | |
+| Sitzung wartet auf die Zeilensperre aus 7.6 | | |
+| Sitzung hält die Sperre (ist also nicht wartend) | | |
+| `BEGIN` gesagt, dann nichts getan | | |
+| Hintergrundprozess ohne `datname` | | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Welche `backend_type`-Werte haben keine `datname`? | |
+| Steht bei der haltenden Sitzung (`SELECT FOR UPDATE …`) `Lock` / `transactionid`? | |
 
 ---
 

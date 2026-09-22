@@ -132,6 +132,9 @@ Die Anweisung stirbt, die Verbindung bleibt. `pg_sleep(5)` ist dabei nur ein
 bequemer Langläufer — der Server arbeitet wirklich fünf Sekunden und wird nach
 zwei abgebrochen.
 
+Was ein zweites Fenster in dieser Zeit sieht (`Timeout` / `PgSleep`), steht in
+Teil 10, 10.3.
+
 Gut zu wissen:
 
 - Es gilt für **jede** Anweisung dieser Sitzung, nicht nur für die nächste. Wer es

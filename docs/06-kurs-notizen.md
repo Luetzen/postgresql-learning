@@ -6,12 +6,17 @@ Sammelstelle für alles, was aus der Schulung noch dazukommt.
 Inhalte kommen nach und nach hier hinein. Pro Thema wird ein eigenes Dokument
 unter `docs/` angelegt und hier verlinkt.)*
 
+Bereits als eigenes Dokument angelegt:
+
+- [7 — Transaktionen, Sperren und Isolationsstufen](07-transaktionen-und-isolation.md)
+
 ---
 
 ## Offene Punkte
 
 - [ ] Weitere Kursinhalte ergänzen, sobald der Link erreichbar ist
 - [ ] Eigene Messwerte eintragen (siehe unten)
+- [ ] Teil 7 durchspielen: zwei Sitzungen, Sperren, Isolationsstufen
 
 ---
 
@@ -31,6 +36,34 @@ Ort: eigener Rechner · Datum: ____________________
 | 4 Mio. mit `generate_series` (ein Befehl) | |
 | erster 100.000er-Block | |
 | letzter 100.000er-Block | |
+
+### Transaktionen (`konto`, Ausgangssumme 20000)
+
+| Schritt | Summe innerhalb der Transaktion | Summe danach |
+|---------|--------------------------------|--------------|
+| halbe Überweisung, **ohne** `BEGIN` | — | |
+| Überweisung in `BEGIN … COMMIT` | | |
+| Überweisung in `BEGIN … ROLLBACK` | | |
+| `ROLLBACK TO SAVEPOINT` nach einem Fehler | | |
+| Summe in einer zweiten Sitzung, während die erste noch offen ist | | |
+
+### Isolationsstufen (zwei Sitzungen)
+
+| Experiment | Stufe | Sitzung A sieht | Sitzung B bekommt | SQLSTATE |
+|------------|-------|-----------------|-------------------|----------|
+| `SELECT sum()` zweimal, dazwischen bestätigt B ein `UPDATE` | `READ COMMITTED` | | | |
+| derselbe Ablauf | `REPEATABLE READ` | | | |
+| beide `UPDATE` dieselbe Zeile | `READ COMMITTED` | | | |
+| beide `UPDATE` dieselbe Zeile | `REPEATABLE READ` | | | |
+| A und B zeigen **gleichzeitig** verschiedene Summen (veralteter Wert) | `REPEATABLE READ` | | | |
+| derselbe Versuch in **einer** Sitzung — Kontrolle | egal | kein Konflikt | — | — |
+| beide lesen `sum()` und schreiben alle Zeilen | `SERIALIZABLE` | | | |
+| zwei Transaktionen sperren zwei Zeilen in umgekehrter Reihenfolge | beliebig | | | |
+
+| Sperre | Wert |
+|--------|------|
+| Wartezeit, bis ein blockiertes `UPDATE` weiterläuft | |
+| `SHOW deadlock_timeout` | |
 
 ---
 

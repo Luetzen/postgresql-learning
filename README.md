@@ -9,6 +9,7 @@ Der Ablauf, den wir hier abbilden:
 3. Die Datenbank `kurs` anlegen mit einer Tabelle `kurs (id, name)`
 4. **4.000.000 Datensätze** einfügen — immer derselbe Befehl, aus einer Datei heraus
 5. Messen: Was kostet eine Abfrage **ohne** Index, was kostet sie **mit** Index/Constraint?
+6. **Zwei Sitzungen gleichzeitig**: Transaktionen, Sperren und Isolationsstufen
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -39,6 +40,7 @@ docker compose version
 | 4 | [docs/04-massenhaft-daten-erzeugen.md](docs/04-massenhaft-daten-erzeugen.md) | 4 Mio. Datensätze, zwei Wege |
 | 5 | [docs/05-query-kosten-mit-und-ohne-index.md](docs/05-query-kosten-mit-und-ohne-index.md) | `EXPLAIN ANALYZE`, Index, Primary Key |
 | 6 | [docs/06-kurs-notizen.md](docs/06-kurs-notizen.md) | Platz für die weiteren Kursinhalte |
+| 7 | [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md) | `konto`, zwei Sitzungen, Sperren, Serialisierungsfehler (40001) |
 
 ---
 
@@ -66,6 +68,31 @@ docker compose down -v
 
 ---
 
+## Schnellstart (Teil 7 — Transaktionen)
+
+Voraussetzung: die Tabelle aus Teil 3 existiert nicht zwingend, `konto` wird
+separat angelegt.
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/04_konto.sql
+```
+
+Und dann in `psql` (für 7.5 und folgende ein **zweites** Fenster mit derselben
+Verbindung öffnen):
+
+```sql
+\set VERBOSITY verbose          -- Fehler mit SQLSTATE anzeigen
+BEGIN;
+UPDATE konto SET betrag = betrag - 100 WHERE id = 1;
+UPDATE konto SET betrag = betrag + 100 WHERE id = 2;
+SELECT sum(betrag) FROM konto;
+COMMIT;
+```
+
+Ganze Übungen: [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md)
+
+---
+
 ## Struktur
 
 ```
@@ -76,7 +103,8 @@ postgresql-learning/
 │   ├── 01_schema.sql
 │   ├── 02_insert_4mio.sql
 │   ├── 02b_insert_100k_block.sql
-│   └── 03_abfragen.sql
+│   ├── 03_abfragen.sql
+│   └── 04_konto.sql
 └── scripts/
     └── insert-schleife.sh       # 40 × derselbe INSERT-Befehl
 ```

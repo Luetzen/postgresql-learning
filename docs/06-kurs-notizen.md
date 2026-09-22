@@ -64,6 +64,8 @@ Ort: eigener Rechner · Datum: ____________________
 |--------|------|
 | Wartezeit, bis ein blockiertes `UPDATE` weiterläuft | |
 | `SHOW deadlock_timeout` | |
+| wartende PID → blockierende PID (`pg_blocking_pids`) | |
+| `state` des Blockierers (`active` / `idle in transaction`) | |
 
 ---
 

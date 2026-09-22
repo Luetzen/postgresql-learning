@@ -326,9 +326,9 @@ Jetzt läuft B von selbst weiter. Der Moment, in dem es *hängt* und dann
 Zwei Dinge, die man dabei lernt:
 
 - Die Sperre liegt auf **einer Zeile**, nicht auf der Tabelle. Zwei Überweisungen
-  auf *verschiedene* Konten behindern sich nicht. Das ist der Preis des
-  Index-überflüssigen Nebeneffekts, der PostgreSQL brauchbar macht: Zeilensperren
-  statt Tabellensperren.
+  auf *verschiedene* Konten behindern sich nicht. Das ist der Grund, warum
+  PostgreSQL nebenläufig überhaupt brauchbar ist: Zeilensperren statt
+  Tabellensperren.
 - In **derselben** Sitzung blockiert man sich nie selbst: wer die Sperre schon
   hält, darf weiterarbeiten. `UPDATE 1` kommt sofort zurück. Zwei Sitzungen sind
   Pflicht, nicht Bequemlichkeit.
@@ -343,6 +343,122 @@ SELECT * FROM konto WHERE id = 2 FOR UPDATE;   -- sperrt, ändert nichts
 UPDATE konto SET betrag = betrag - 100 WHERE id = 2;
 COMMIT;
 ```
+
+---
+
+## 7.6b Wer blockiert wen? `pg_blocking_pids()`
+
+`wait_event_type = Lock` sagt *dass* gewartet wird. **Welche** Sitzung die Sperre
+hält, sagt es nicht. Dafür gibt es eine eigene Funktion:
+
+```sql
+SELECT pg_blocking_pids(1234);      -- 1234 = pid der wartenden Sitzung
+```
+
+Das Ergebnis ist ein **Array von PIDs**: die Sitzungen, die diese eine Sitzung
+blockieren.
+
+| Ergebnis | Bedeutung |
+|----------|-----------|
+| `{}` | wartet auf niemanden — sie wartet gar nicht, oder sie ist selbst die Sperrende |
+| `{42}` | genau eine Sitzung blockiert sie |
+| `{42,43}` | mehr als eine Sitzung ist an der Sperre beteiligt |
+
+Am besten fragt man alle Sitzungen auf einmal und lässt nur die wartenden übrig:
+
+```sql
+SELECT pid,
+       pg_blocking_pids(pid) AS blockiert_von,
+       wait_event_type,
+       wait_event,
+       left(query, 50) AS query
+FROM pg_stat_activity
+WHERE datname = 'kurs'
+  AND cardinality(pg_blocking_pids(pid)) > 0;
+```
+
+Erwartung: eine Zeile — die wartende Sitzung (B aus 7.6) mit der PID der
+blockierenden (A) im Feld `blockiert_von`. `cardinality()` zählt die Elemente
+eines Arrays, `> 0` heißt also „wird blockiert". Ein leeres Array erfüllt die
+Bedingung nicht — die Sperrenden selbst tauchen hier nicht auf.
+
+Und den Blockierer selbst ansehen — das ist die Sitzung, um die man sich
+kümmern muss:
+
+```sql
+SELECT pid, state, xact_start, state_change, left(query, 50) AS query
+FROM pg_stat_activity
+WHERE pid = ANY (pg_blocking_pids(1234));
+```
+
+`pid = ANY (array)` heißt „ist in diesem Array enthalten". Mit einer Liste
+bräuchte man `IN` — mit einem Array funktioniert nur `ANY`.
+
+Der wichtigste Wert in dieser Ausgabe ist `state`:
+
+| `state` des Blockierers | was das heißt |
+|-------------------------|---------------|
+| `active` | sie rechnet gerade und wird fertig |
+| `idle in transaction` | sie sitzt in einer offenen Transaktion und tut **nichts** |
+
+`idle in transaction` ist der klassische Fall, und der ärgerlichste: niemand
+arbeitet, aber alle warten. Die Sitzung hat `BEGIN` gesagt und dann nichts mehr —
+die Sperre gilt trotzdem weiter, bis `COMMIT`, `ROLLBACK` oder Verbindungsende.
+`state_change` verrät dabei, wie lange das schon so geht. Genau deshalb ist
+„Transaktion immer beenden" keine Stilfrage, sondern eine Frage der Verfügbarkeit.
+
+Ist der Blockierer selbst blockiert, wendet man die Funktion auf ihn noch einmal
+an und geht die Kette weiter:
+
+```sql
+SELECT pg_blocking_pids(1234);   -- blockiert von ...
+SELECT pg_blocking_pids(42);     -- und 42 selbst? weiter nachsehen
+```
+
+### Was macht man damit?
+
+1. Der Blockierer kann es selbst beenden — dort `COMMIT;` oder `ROLLBACK;`
+   absetzen. Das ist der saubere Weg.
+2. Die laufende **Abfrage** des Blockierers abbrechen, ohne die Verbindung zu
+   beenden:
+
+   ```sql
+   SELECT pg_cancel_backend(42);
+   ```
+
+3. Notfalls die ganze Sitzung beenden:
+
+   ```sql
+   SELECT pg_terminate_backend(42);
+   ```
+
+Punkt 3 ist kein Aufräumen, sondern ein Notausgang: die Sitzung wird gekappt und
+ihre offene Transaktion **zurückgerollt**. Alles, was sie noch nicht bestätigt
+hatte, ist weg — bei einer halbfertigen Überweisung also der Zustand aus 7.3.
+Vorher deshalb immer die Abfrage von oben laufen lassen und wissen, wen man da
+abschneidet. Und nicht in ein Skript schreiben, das pauschal alles mit
+`state = 'idle in transaction'` abschießt: das erwischt auch Sitzungen, die
+gerade legitim mitten in einer Arbeit stecken.
+
+### Der längere Weg, zum Vergleich
+
+Ohne die Funktion müsste man die Sperren selbst zusammenbauen: die wartende
+Sitzung in `pg_locks` mit `granted = false` suchen, die Sperre finden, auf die sie
+wartet, und dann die Sitzungen suchen, die dieselbe Sperre mit `granted = true`
+halten. `pg_blocking_pids()` macht genau diese Arbeit — und wertet dabei auch die
+Warteschlange aus, nicht nur die gerade gehaltenen Sperren.
+
+Ein Blick in `pg_locks` lohnt sich trotzdem einmal, weil man dort sieht, *worauf*
+gewartet wird — Zeile, Tabelle, Transaktions-ID:
+
+```sql
+SELECT locktype, mode, granted, pid, relation::regclass
+FROM pg_locks
+WHERE pid = 1234
+   OR pid = ANY (pg_blocking_pids(1234));
+```
+
+Referenz: https://www.postgresql.org/docs/18/functions-info.html
 
 ---
 
@@ -385,6 +501,29 @@ wartet, bevor er das merkt:
 ```sql
 SHOW deadlock_timeout;
 ```
+
+So lange dauert es, bis der Server den Zyklus überhaupt bemerkt — und genau so
+lange hat man Zeit, ihn sich anzusehen. Damit das Fenster groß genug ist, **vor**
+dem Versuch in beiden Fenstern:
+
+```sql
+SET deadlock_timeout = '10s';
+```
+
+Dann in **Fenster C** nachsehen, während beide hängen:
+
+```sql
+SELECT pid, pg_blocking_pids(pid) AS blockiert_von
+FROM pg_stat_activity
+WHERE datname = 'kurs'
+  AND cardinality(pg_blocking_pids(pid)) > 0;
+```
+
+Erwartung: **zwei** Zeilen — und die PIDs zeigen **aufeinander**. A blockiert B
+und B blockiert A. Das ist die Verklemmung, sichtbar gemacht: sonst hätte man nur
+den Eindruck „es hängt", hier steht der Zyklus schwarz auf weiß. `pg_blocking_pids()`
+ist damit nicht nur ein Werkzeug für einfache Wartesituationen, sondern auch der
+schnellste Weg, eine Verklemmung zu belegen.
 
 Die Lehre daraus ist praktisch: **in einer Überweisung immer in derselben
 Reihenfolge sperren** (erst das kleinere `id`, dann das größere). Dann kann diese

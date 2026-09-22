@@ -232,6 +232,17 @@ Die beiden `SELECT`-Zeilen sind der Punkt: davor sichtbar, danach verschwunden.
 `ROLLBACK TO SAVEPOINT` macht aus dem `!#`-Prompt wieder ein `*#` — die
 Transaktion läuft weiter, nur ein Teil davon ist verworfen.
 
+Und es wird nicht nur die **Änderung** verworfen: laut Doku werden auch die
+**Sperren** freigegeben, die seit dem Savepoint genommen wurden. Dieselbe Regel
+gilt für Sperren aus einem PL/pgSQL-`EXCEPTION`-Block. In zwei Fenstern ist das
+nachzuprüfen: B wartet auf eine Zeile, die A seit einem Savepoint hält — ein
+`ROLLBACK TO SAVEPOINT` in A lässt B weiterlaufen, ohne dass die Transaktion
+endet (siehe 7.6c).
+
+Was beim Rollback *liegen bleibt*, steht in Teil 12: die Zeile trägt danach noch
+das `xmax` der abgebrochenen Transaktion — sichtbar, aber mit einer
+„gelöscht von"-Nummer, die nichts mehr bedeutet.
+
 Zur Kontrolle der Prompt:
 
 ```sql

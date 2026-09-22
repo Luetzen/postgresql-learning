@@ -13,6 +13,8 @@ Bereits als eigenes Dokument angelegt:
 - [9 — Verklemmungen: erkennen, protokollieren, vermeiden](09-verklemmungen.md)
 - [10 — Warteereignisse: worauf wartet eine Sitzung wirklich?](10-warteereignisse.md)
 - [11 — Indizes anlegen, ohne den Betrieb anzuhalten](11-indizes-im-betrieb.md)
+- [12 — MVCC: Zeilenversionen, `xmin`/`xmax` und alte Werte](12-mvcc.md)
+- [13 — Tote Zeilen, VACUUM und Bloat](13-vacuum-und-tote-zeilen.md)
 
 ---
 
@@ -130,6 +132,36 @@ Ort: eigener Rechner · Datum: ____________________
 | Plan nach dem Abbruch: `Seq Scan` oder `Index Scan`? | |
 | Plan nach `DROP INDEX` + `ANALYZE` + neuem Build | |
 | Wartezeit des Builds (erste Phase mit nur einem `kurs`, zweite mit offener Transaktion) | |
+
+### MVCC (`xmin`, `xmax`, `ctid`)
+
+| Schritt | `ctid` | `xmin` | `xmax` | `betrag` |
+|---------|--------|--------|--------|----------|
+| vor dem `UPDATE` | | | | |
+| innerhalb der Transaktion (Fenster A) | | | | |
+| nach `ROLLBACK` | | | | |
+| nach `COMMIT` (der Vergleich) | | | | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| `pg_current_xact_id()` deiner Transaktion | |
+| `pg_xact_status(...)` dieses Werts nach dem Rollback | |
+| Taucht die eigene Sitzung in `pg_snapshot_xip(pg_current_snapshot())` auf, während sie in einer Transaktion sitzt? | |
+
+### VACUUM
+
+| Messung | Wert |
+|---------|------|
+| `n_dead_tup` nach 1000 Änderungen | |
+| `VACUUM VERBOSE konto` meldet: tote Zeilenversionen / Seiten | |
+| davon „cannot be removed yet", solange Fenster A offen war | |
+| `n_dead_tup` nach `VACUUM` | |
+| `pg_relation_size('kurs')` vor dem `UPDATE` | |
+| nach `UPDATE kurs SET name = name;` | |
+| nach `VACUUM kurs` | |
+| nach `VACUUM FULL kurs` | |
+| `last_autovacuum` (falls vorhanden) | |
+| `age(datfrozenxid)` in `pg_database` | |
 
 ---
 

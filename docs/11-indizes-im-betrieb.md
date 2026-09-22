@@ -91,6 +91,9 @@ SELECT * FROM pg_stat_progress_create_index;
 Die Ansicht ist genau für diesen einen Vorgang da. Sieh sie dir während eines
 Builds selbst an und lies, in welchem Schritt er steckt und auf wen er wartet.
 
+Warum eine alte Transaktion so teuer ist — sie hält nicht nur den Build auf,
+sondern auch das Aufräumen toter Zeilen —, steht in Teil 12 und 13.
+
 ---
 
 ## 11.3 `INVALID` — ein Index, den es nicht gibt

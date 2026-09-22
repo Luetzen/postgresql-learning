@@ -14,6 +14,8 @@ Der Ablauf, den wir hier abbilden:
 8. **Verklemmungen**: im Log finden, protokollieren, mit `NOWAIT`/`SKIP LOCKED` vermeiden
 9. **Warteereignisse**: worauf eine Sitzung wirklich wartet — und was „page locks" sind
 10. **Indizes im Betrieb**: `CONCURRENTLY`, `INVALID`, `REINDEX`
+11. **MVCC**: Zeilenversionen, `xmin`/`xmax` und warum alte Werte noch sichtbar sind
+12. **VACUUM**: tote Zeilen, Bloat und warum eine offene Transaktion aufhält
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -49,6 +51,8 @@ docker compose version
 | 9 | [docs/09-verklemmungen.md](docs/09-verklemmungen.md) | Deadlocks im Serverlog, `log_lock_waits`, `NOWAIT`, `SKIP LOCKED`, `40P01` |
 | 10 | [docs/10-warteereignisse.md](docs/10-warteereignisse.md) | `wait_event_type`, `pg_wait_events`, „page locks", Buffer-Pin |
 | 11 | [docs/11-indizes-im-betrieb.md](docs/11-indizes-im-betrieb.md) | `CREATE INDEX CONCURRENTLY`, `INVALID`, `REINDEX` |
+| 12 | [docs/12-mvcc.md](docs/12-mvcc.md) | `ctid`, `xmin`, `xmax`, Schnappschüsse, `pg_xact_status` |
+| 13 | [docs/13-vacuum-und-tote-zeilen.md](docs/13-vacuum-und-tote-zeilen.md) | `VACUUM`, tote Zeilen, Bloat, autovacuum |
 
 ---
 
@@ -170,6 +174,26 @@ DROP INDEX idx_kurs_cc;
 ```
 
 Alle Einzelheiten: [docs/11-indizes-im-betrieb.md](docs/11-indizes-im-betrieb.md)
+
+---
+
+## Schnellstart (Teil 12/13 — MVCC und VACUUM)
+
+```sql
+SELECT ctid, xmin, xmax, * FROM konto;          -- Zeilenversionen ansehen
+SELECT pg_current_xact_id();                    -- eigene Transaktions-ID
+
+-- in einer Transaktion ändern und nicht bestätigen:
+BEGIN;
+UPDATE konto SET betrag = betrag + 100 WHERE id = 1;
+-- in einem zweiten Fenster: SELECT ctid, xmin, xmax FROM konto;  -> altes xmax, alter Wert
+ROLLBACK;
+
+VACUUM VERBOSE konto;                           -- was aufgeräumt wird
+```
+
+Alle Einzelheiten: [docs/12-mvcc.md](docs/12-mvcc.md) und
+[docs/13-vacuum-und-tote-zeilen.md](docs/13-vacuum-und-tote-zeilen.md)
 
 ---
 

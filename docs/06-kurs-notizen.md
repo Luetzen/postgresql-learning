@@ -9,6 +9,7 @@ unter `docs/` angelegt und hier verlinkt.)*
 Bereits als eigenes Dokument angelegt:
 
 - [7 — Transaktionen, Sperren und Isolationsstufen](07-transaktionen-und-isolation.md)
+- [8 — Timeouts: Anweisung, Transaktion, Sperre](08-timeouts.md)
 
 ---
 
@@ -66,6 +67,22 @@ Ort: eigener Rechner · Datum: ____________________
 | `SHOW deadlock_timeout` | |
 | wartende PID → blockierende PID (`pg_blocking_pids`) | |
 | `state` des Blockierers (`active` / `idle in transaction`) | |
+
+### Timeouts
+
+| Einstellung | Vorgabewert auf diesem Server (`SHOW …`) | eigenes Ergebnis |
+|-------------|------------------------------------------|------------------|
+| `statement_timeout` | | bricht ab nach |
+| `lock_timeout` | | bricht ab nach |
+| `idle_in_transaction_session_timeout` | | Sitzung weg nach |
+| `idle_session_timeout` | | Sitzung weg nach |
+| `transaction_timeout` | | Sitzung weg nach |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Zählt die Wartezeit auf eine Sperre in `statement_timeout` mit? | |
+| Läuft `transaction_timeout` vor den beiden anderen ab? | |
+| Was stand nach dem `idle_in_transaction_session_timeout` in `konto`? | |
 
 ---
 

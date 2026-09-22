@@ -302,6 +302,9 @@ Kein Fehler, kein Abbruch: B **wartet**. Das `UPDATE` in A hat eine
 **Zeilensperre** auf genau diese eine Zeile gesetzt. Sie gilt bis zum Ende der
 Transaktion.
 
+Wie lange B wartet, entscheidet B selbst — mit `lock_timeout` gibt B nach einer
+festgelegten Zeit auf, statt unbegrenzt zu hängen (Teil 8, 8.4).
+
 **Fenster C** (drittes Fenster) zeigt, worauf B wartet:
 
 ```sql
@@ -406,6 +409,9 @@ arbeitet, aber alle warten. Die Sitzung hat `BEGIN` gesagt und dann nichts mehr 
 die Sperre gilt trotzdem weiter, bis `COMMIT`, `ROLLBACK` oder Verbindungsende.
 `state_change` verrät dabei, wie lange das schon so geht. Genau deshalb ist
 „Transaktion immer beenden" keine Stilfrage, sondern eine Frage der Verfügbarkeit.
+
+Und genau dagegen gibt es eine Einstellung: `idle_in_transaction_session_timeout`
+beendet solche Sitzungen serverseitig von allein — siehe Teil 8.
 
 Ist der Blockierer selbst blockiert, wendet man die Funktion auf ihn noch einmal
 an und geht die Kette weiter:

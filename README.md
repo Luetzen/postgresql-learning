@@ -10,6 +10,7 @@ Der Ablauf, den wir hier abbilden:
 4. **4.000.000 Datensätze** einfügen — immer derselbe Befehl, aus einer Datei heraus
 5. Messen: Was kostet eine Abfrage **ohne** Index, was kostet sie **mit** Index/Constraint?
 6. **Zwei Sitzungen gleichzeitig**: Transaktionen, Sperren und Isolationsstufen
+7. **Timeouts**: Anweisung, Transaktion und Sperre zeitlich begrenzen
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -41,6 +42,7 @@ docker compose version
 | 5 | [docs/05-query-kosten-mit-und-ohne-index.md](docs/05-query-kosten-mit-und-ohne-index.md) | `EXPLAIN ANALYZE`, Index, Primary Key |
 | 6 | [docs/06-kurs-notizen.md](docs/06-kurs-notizen.md) | Platz für die weiteren Kursinhalte |
 | 7 | [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md) | `konto`, zwei Sitzungen, Sperren, Serialisierungsfehler (40001) |
+| 8 | [docs/08-timeouts.md](docs/08-timeouts.md) | `statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`, `transaction_timeout` |
 
 ---
 
@@ -90,6 +92,19 @@ COMMIT;
 ```
 
 Ganze Übungen: [docs/07-transaktionen-und-isolation.md](docs/07-transaktionen-und-isolation.md)
+
+---
+
+## Schnellstart (Teil 8 — Timeouts)
+
+```sql
+SHOW statement_timeout;                  -- Vorgabe: 0 = aus
+SET statement_timeout = '2s';
+SELECT pg_sleep(5);                      -- ERROR: canceling statement due to statement timeout
+RESET statement_timeout;
+```
+
+Alle Timeouts: [docs/08-timeouts.md](docs/08-timeouts.md)
 
 ---
 

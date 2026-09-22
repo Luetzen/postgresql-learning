@@ -177,6 +177,9 @@ erledigt `VACUUM` zusätzlich die aufgeschobenen Index-Einträge (`fastupdate`, 
 - **Nicht im Transaktionsblock** (siehe 13.1).
 - Man braucht das `MAINTAIN`-Recht auf der Tabelle — oder ist Eigentümer der
   Datenbank, dann darf man alles darin vacuumen.
+- Es nimmt `SHARE UPDATE EXCLUSIVE` auf die Tabelle (7.6c). Deshalb kann `VACUUM`
+  auch **warten** — wenn jemand eine kollidierende Sperre hält, etwa mit einer
+  offenen Schemaänderung.
 - `VACUUM (SKIP_LOCKED)` überspringt Tabellen, die gerade nicht sofort gesperrt
   werden können, statt zu warten.
 - Es kostet **I/O**, und das kann andere Sitzungen bremsen. Dafür gibt es die
@@ -238,6 +241,67 @@ SHOW autovacuum_naptime;               -- wie oft nachgesehen wird
 Ob es zugeschlagen hat, steht in `pg_stat_user_tables` in `last_autovacuum` und
 `autovacuum_count`. Bei einer Zwei-Zeilen-Tabelle passiert lange nichts — die
 Schwelle ist deutlich höher als das, was unsere Experimente erzeugen.
+
+### Es rettet dich nicht vor einer offenen Transaktion
+
+Das ist der Punkt, den man beim ersten Kontakt übersieht: **Autovacuum hat genau
+dieselbe Grenze wie ein `VACUUM` von Hand.** Kann eine tote Zeilenversion noch von
+einem Schnappschuss gesehen werden, darf sie nicht weggeräumt werden — und
+automatisch wird das nicht besser. Ein „vergessener" `BEGIN` von irgendwo in der
+Anwendung bremst also die automatische Aufräumarbeit genauso aus wie einen
+manuellen Lauf.
+
+Sichtbar ist das an drei Stellen:
+
+```sql
+-- läuft gerade jemand?
+SELECT pid, backend_type, state, left(query, 50) AS query
+FROM pg_stat_activity
+WHERE backend_type = 'autovacuum worker';
+```
+
+Der `backend_type` ist derselbe, den du in 7.5 und 10.6 schon gesehen hast.
+Weiter:
+
+```sql
+SELECT * FROM pg_stat_progress_vacuum;                 -- was er gerade tut
+SELECT relname, n_dead_tup, last_autovacuum
+FROM pg_stat_user_tables WHERE relname = 'konto';       -- ob er drankam
+```
+
+Steht der `n_dead_tup` hoch und `last_autovacuum` ist alt, arbeitet niemand — oder
+jemand arbeitet erfolgreich dagegen an.
+
+### Zwei verschiedene „geht nicht"
+
+Das lohnt sich zu trennen, weil die Ursachen verschieden sind:
+
+| Symptom | Ursache | Abhilfe |
+|---------|---------|---------|
+| `VACUUM` **wartet** | jemand hält eine kollidierende Tabellensperre (7.6c) | `SKIP_LOCKED`, oder die Sperre beenden |
+| „… dead but **not yet removable**" im Bericht | ein **Schnappschuss** könnte die alten Versionen noch sehen (13.4) | die offene Transaktion beenden |
+
+Im ersten Fall tut `VACUUM` gar nichts, im zweiten Fall tut er alles, was er darf —
+und lässt den Rest liegen. Das ist der Unterschied zwischen „blockiert" und
+„darf nicht".
+
+### Wann es trotzdem schiefgeht
+
+Autovacuum ist Schadensbegrenzung, kein Ersatz für kurze Transaktionen (7.6b,
+8.3). Wenn dauerhaft etwas den Schnappschuss-Horizont festhält, wächst die
+Tabelle — und irgendwann kommt die Notbremse für den Transaktionszähler
+(13.7): Autovacuum wird dann aggressiv (`autovacuum_freeze_max_age`) und darf
+sogar die Index-Aufräumung überspringen, um rechtzeitig fertig zu werden.
+
+Zwei typische Fußangeln:
+
+- **Autovacuum pro Tabelle abschalten.** `ALTER TABLE … SET (autovacuum_enabled =
+  false)` gibt es wirklich, und es ist fast immer ein Fehler.
+- **Eine lange lesende Transaktion.** Ein `SELECT` hält keine Zeilensperre
+  (7.6c) — aber einen Schnappschuss. Man merkt nichts, bis die Tabelle groß ist.
+
+Die eigentliche Antwort bleibt deshalb dieselbe wie in 7.6b: **Transaktionen
+beenden.** Aufräumen kann immer nur so viel tun, wie die Schnappschüsse zulassen.
 
 ---
 

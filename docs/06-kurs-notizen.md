@@ -167,6 +167,16 @@ Ort: eigener Rechner · Datum: ____________________
 | `last_autovacuum` (falls vorhanden) | |
 | `age(datfrozenxid)` in `pg_database` | |
 
+### Autovacuum
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| `SHOW autovacuum_vacuum_threshold` / `_scale_factor` / `naptime` | |
+| Taucht `backend_type = 'autovacuum worker'` bei dir auf, wenn du 50.000 Änderungen machst? | |
+| Wie lange nach den Änderungen war `last_autovacuum` gesetzt? | |
+| Bleibt `n_dead_tup` hoch, wenn eine Transaktion offen steht? | |
+| Was meldet `pg_stat_progress_vacuum`, während er läuft? | |
+
 ---
 
 ## Eigene Fragen

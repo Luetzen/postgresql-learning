@@ -155,6 +155,10 @@ Ort: eigener Rechner · Datum: ____________________
 | `n_dead_tup` nach 1000 Änderungen | |
 | `VACUUM VERBOSE konto` meldet: tote Zeilenversionen / Seiten | |
 | davon „cannot be removed yet", solange Fenster A offen war | |
+| `removable cutoff` aus dem Bericht | |
+| `visibility map`: Seiten `all-visible` nach dem Lauf | |
+| `WAL usage`: Bytes, die das Aufräumen gekostet hat | |
+| `new relfrozenxid` und der Abstand zum vorherigen Wert | |
 | `n_dead_tup` nach `VACUUM` | |
 | `pg_relation_size('kurs')` vor dem `UPDATE` | |
 | nach `UPDATE kurs SET name = name;` | |

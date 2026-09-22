@@ -85,6 +85,58 @@ Cursor die Aufräumarbeit behindern kann — siehe 10.6 (g).
 
 ---
 
+## 13.1b Die `VERBOSE`-Ausgabe lesen
+
+Das ist der einzige Ort, an dem man sieht, **was** `VACUUM` getan hat. Die Form ist
+immer dieselbe (hier mit `N` statt Zahlen — deine stehen in
+`06-kurs-notizen.md`):
+
+```text
+INFO:  vacuuming "kurs.public.konto"
+INFO:  finished vacuuming "kurs.public.konto": index scans: N
+pages: N removed, N remain, N scanned (…% of total), N eagerly scanned
+tuples: N removed, N remain, N are dead but not yet removable
+removable cutoff: N, which was N XIDs old when operation ended
+new relfrozenxid: N, which is N XIDs ahead of previous value
+frozen: N pages from table (…% of total) had N tuples frozen
+visibility map: N pages set all-visible, N pages set all-frozen (N were all-visible)
+index scan not needed: N pages from table (…% of total) had N dead item identifiers removed
+avg read rate: … MB/s, avg write rate: … MB/s
+buffer usage: N hits, N reads, N dirtied
+WAL usage: N records, N full page images, N bytes, N buffers full
+system usage: CPU: user: … s, system: … s, elapsed: … s
+```
+
+| Zeile | was sie sagt |
+|-------|--------------|
+| `tuples: … removed` | wie viele **tote Zeilenversionen** weggeräumt wurden — die Zahl aus 13.0 |
+| `tuples: … remain` | wie viele lebende Zeilen danach dastehen |
+| `… are dead but not yet removable` | **der wichtigste Wert:** tote Versionen, die noch **nicht** weggeräumt werden durften. Steht hier eine Zahl größer null, hält jemand einen Schnappschuss (13.4) |
+| `removable cutoff` | bis zu welcher Transaktions-ID aufgeräumt werden durfte. „0 XIDs old" heißt: nichts hat aufgehalten |
+| `new relfrozenxid` | der Stand für das Einfrieren (13.7) — er wandert mit jedem Lauf nach vorn |
+| `pages: … removed` | leere Seiten am **Ende**, die abgeschnitten wurden (die `TRUNCATE`-Option aus 13.1) |
+| `pages: … scanned (…%)` | wie viel wirklich gelesen wurde. Weniger als 100 % heißt: die Sichtbarkeitskarte hat Seiten übersprungen |
+| `visibility map: … set all-visible` | wie viele Seiten **jetzt für alle sichtbar** sind. Ab dann kann `VACUUM` sie künftig überspringen — und `Index Only Scan`s werden möglich (5.3) |
+| `frozen: … had … tuples frozen` | wie viele Zeilen eingefroren wurden. Bei einer kleinen, jungen Tabelle fast immer `0` |
+| `index scans` / `index scan not needed` | ob Indexe mit aufgeräumt werden mussten |
+| `buffer usage` | `hits` = lag im Cache, `reads` = kam von der Platte, `dirtied` = geänderte Puffer |
+| `WAL usage` | **Aufräumen kostet Schreibzugriffe** — auch Wegräumen muss protokolliert werden |
+| `system usage` | CPU-Zeit und Dauer des Vorgangs |
+
+Drei Dinge, die daran überraschen:
+
+- **Es erscheint mehr als eine Tabelle.** Unter `konto` taucht eine zweite auf:
+  `pg_toast_…`. Das ist die TOAST-Tabelle, die jede Tabelle für übergroße Werte
+  bekommt. Bleibt sie leer, waren alle Werte kurz genug.
+- **`all-visible` ist ein Nebeneffekt, den man haben will.** Ist eine Seite für
+  alle sichtbar, kann sie übersprungen werden — und ein `Index Only Scan` wird
+  möglich.
+- **`0 are dead but not yet removable` ist die gute Nachricht.** Genau diese
+  Zeile wird ungleich null, sobald in einem anderen Fenster eine Transaktion
+  offen steht — der Versuch dazu steht in 13.4.
+
+---
+
 ## 13.2 Drei Dinge, die man trennt
 
 | Anweisung | was sie tut |

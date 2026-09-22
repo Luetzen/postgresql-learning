@@ -15,6 +15,7 @@ Bereits als eigenes Dokument angelegt:
 - [11 — Indizes anlegen, ohne den Betrieb anzuhalten](11-indizes-im-betrieb.md)
 - [12 — MVCC: Zeilenversionen, `xmin`/`xmax` und alte Werte](12-mvcc.md)
 - [13 — Tote Zeilen, VACUUM und Bloat](13-vacuum-und-tote-zeilen.md)
+- [14 — Konfiguration: wo Einstellungen stehen und wann sie wirken](14-konfiguration.md)
 
 ---
 
@@ -176,6 +177,16 @@ Ort: eigener Rechner · Datum: ____________________
 | Wie lange nach den Änderungen war `last_autovacuum` gesetzt? | |
 | Bleibt `n_dead_tup` hoch, wenn eine Transaktion offen steht? | |
 | Was meldet `pg_stat_progress_vacuum`, während er läuft? | |
+
+### Konfiguration
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| `SHOW config_file;` — welcher Pfad? | |
+| `context` und `source` von `autovacuum_max_workers` | |
+| `pending_restart` nach `ALTER SYSTEM SET autovacuum_naptime` | |
+| `source` von `work_mem` nach einem `SET` in der Sitzung | |
+| Steht nach dem Aufräumen noch etwas auf `source <> 'default'`? | |
 
 ---
 

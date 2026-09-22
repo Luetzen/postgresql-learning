@@ -303,6 +303,9 @@ Zwei typische Fußangeln:
 Die eigentliche Antwort bleibt deshalb dieselbe wie in 7.6b: **Transaktionen
 beenden.** Aufräumen kann immer nur so viel tun, wie die Schnappschüsse zulassen.
 
+Die Schalter selbst — welche es gibt, welche davon einen Neustart brauchen und wie
+man sie **pro Tabelle** statt global setzt — stehen in Teil 14.
+
 ---
 
 ## 13.6 Bloat: messen statt glauben

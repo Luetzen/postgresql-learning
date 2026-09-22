@@ -104,6 +104,10 @@ der Sitzung hat Vorrang vor beiden. Wo die Konfigurationsdatei liegt:
 SHOW config_file;
 ```
 
+Die vollständige Kette — Vorgabe, `postgresql.conf`, `postgresql.auto.conf`,
+Datenbank, Rolle, Sitzung — und wann eine Änderung einen **Neustart** braucht,
+steht in Teil 14.
+
 Und der Weg über die Kommandozeile — die Werte kommen dann schon mit der
 Verbindung, ohne `SET` im `psql`:
 

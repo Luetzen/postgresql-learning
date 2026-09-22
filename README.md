@@ -16,6 +16,7 @@ Der Ablauf, den wir hier abbilden:
 10. **Indizes im Betrieb**: `CONCURRENTLY`, `INVALID`, `REINDEX`
 11. **MVCC**: Zeilenversionen, `xmin`/`xmax` und warum alte Werte noch sichtbar sind
 12. **VACUUM**: tote Zeilen, Bloat und warum eine offene Transaktion aufhält
+13. **Konfiguration**: wo Einstellungen stehen und wann sie wirken
 
 Alles, was hier als Befehl steht, ist Copy-Paste-fähig.
 
@@ -53,6 +54,7 @@ docker compose version
 | 11 | [docs/11-indizes-im-betrieb.md](docs/11-indizes-im-betrieb.md) | `CREATE INDEX CONCURRENTLY`, `INVALID`, `REINDEX` |
 | 12 | [docs/12-mvcc.md](docs/12-mvcc.md) | `ctid`, `xmin`, `xmax`, Schnappschüsse, `pg_xact_status` |
 | 13 | [docs/13-vacuum-und-tote-zeilen.md](docs/13-vacuum-und-tote-zeilen.md) | `VACUUM`, tote Zeilen, Bloat, autovacuum |
+| 14 | [docs/14-konfiguration.md](docs/14-konfiguration.md) | `postgresql.conf`, `ALTER SYSTEM`, `pg_settings`, Reload oder Neustart |
 
 ---
 
@@ -194,6 +196,28 @@ VACUUM VERBOSE konto;                           -- was aufgeräumt wird
 
 Alle Einzelheiten: [docs/12-mvcc.md](docs/12-mvcc.md) und
 [docs/13-vacuum-und-tote-zeilen.md](docs/13-vacuum-und-tote-zeilen.md)
+
+---
+
+## Schnellstart (Teil 14 — Konfiguration)
+
+```sql
+SHOW config_file;
+
+SELECT name, setting, unit, context, source, pending_restart
+FROM pg_settings
+WHERE name LIKE 'autovacuum%'
+ORDER BY name;
+
+ALTER SYSTEM SET autovacuum_naptime = '30s';
+SELECT pg_reload_conf();
+SHOW autovacuum_naptime;
+
+ALTER SYSTEM RESET autovacuum_naptime;
+SELECT pg_reload_conf();
+```
+
+Alle Einzelheiten: [docs/14-konfiguration.md](docs/14-konfiguration.md)
 
 ---
 

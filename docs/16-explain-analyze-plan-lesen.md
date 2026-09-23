@@ -188,7 +188,8 @@ Seq Scan on pg_statistic s  (cost=0.00..34.15 rows=615 ...) (actual ... rows=438
   erste Griff.
 - Zweite Ursache: die Daten sind **korreliert** (z. B. Postleitzahl und Ort in
   derselben Tabelle). Hier hilft `CREATE STATISTICS` auf mehreren Spalten
-  (`ndistinct`, `mcv`, `dependencies`).
+  (`ndistinct`, `mcv`, `dependencies`) — durchgerechnet in
+  [Teil 19](19-schaetzung-und-parallele-plaene.md).
 - Dritte Ursache: die Tabelle ist zu klein oder zu eigenartig für
   Durchschnittswerte. **Systemkataloge sind genau so ein Fall** — die
   Verteilung in `pg_class` oder `pg_attribute` ist nicht wie in Anwendungsdaten,
@@ -475,6 +476,8 @@ Bewusst offengelassen, kommt nach und nach dazu:
 - **`log_min_duration_statement`** — ab wann ist eine Abfrage einen Log-Eintrag
   wert? (Teil 14)
 - **Plan-Regression mit `EXPLAIN (FORMAT JSON)`** in einem Skript.
+- **Parallele Pläne** — `Gather`, geplante gegen gestartete Worker, und wem die
+  Zahlen in so einem Knoten gehören: [Teil 19](19-schaetzung-und-parallele-plaene.md).
 
 (`track_io_timing` steht nicht mehr hier — es wird jetzt in 16.5b benutzt.)
 

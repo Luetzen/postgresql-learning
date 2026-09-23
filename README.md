@@ -58,6 +58,8 @@ docker compose version
 | 15 | [docs/15-repack.md](docs/15-repack.md) | `REPACK` (ab PostgreSQL 19): Neuschreiben, `CONCURRENTLY`, `USING INDEX` |
 | 16 | [docs/16-explain-analyze-plan-lesen.md](docs/16-explain-analyze-plan-lesen.md) | Plan lesen: `cost`, `rows` gegen `actual`, `loops`, `Buffers`, `Batches` |
 | 17 | [docs/17-join-methoden.md](docs/17-join-methoden.md) | Nested Loop, Hash Join, Merge Join: wann welche, und was der Index daran ändert |
+| 18 | [docs/18-testdaten-erzeugen.md](docs/18-testdaten-erzeugen.md) | Testdaten mit Variation: `random()`, Modulo, `ARRAY`, `md5()`, UUIDs, `pgbench` |
+| 19 | [docs/19-schaetzung-und-parallele-plaene.md](docs/19-schaetzung-und-parallele-plaene.md) | Falsche Schätzung bei korrelierten Spalten, `CREATE STATISTICS`, `Gather` und Worker |
 
 ---
 
@@ -252,6 +254,48 @@ Alle Übungen: [docs/17-join-methoden.md](docs/17-join-methoden.md)
 
 ---
 
+## Schnellstart (Teil 18 — Testdaten mit Variation)
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/06_adresse.sql
+```
+
+Und dann in `psql` — dieselben Werte, einmal in Blöcken, einmal gemischt:
+
+```sql
+SELECT count(*) FROM adresse;
+SELECT count(DISTINCT stadt), count(DISTINCT plz), count(DISTINCT strasse) FROM adresse;
+
+ANALYZE adresse;
+SELECT attname, n_distinct, correlation FROM pg_stats
+WHERE tablename = 'adresse' ORDER BY attname;
+```
+
+Alle Werkzeuge: [docs/18-testdaten-erzeugen.md](docs/18-testdaten-erzeugen.md)
+
+---
+
+## Schnellstart (Teil 19 — Schätzung und parallele Pläne)
+
+Voraussetzung: `adresse` aus Teil 18.
+
+```sql
+ANALYZE adresse;
+
+EXPLAIN (ANALYZE) SELECT * FROM adresse WHERE stadt = 1 AND plz = 100;
+EXPLAIN (ANALYZE) SELECT * FROM adresse WHERE stadt = 1;          -- zum Vergleich
+
+CREATE STATISTICS adresse_stadt_plz (dependencies, ndistinct)
+    ON stadt, plz FROM adresse;
+ANALYZE adresse;
+
+EXPLAIN (ANALYZE) SELECT * FROM adresse WHERE stadt = 1 AND plz = 100;
+```
+
+Alle Einzelheiten: [docs/19-schaetzung-und-parallele-plaene.md](docs/19-schaetzung-und-parallele-plaene.md)
+
+---
+
 ## Struktur
 
 ```
@@ -264,7 +308,8 @@ postgresql-learning/
 │   ├── 02b_insert_100k_block.sql
 │   ├── 03_abfragen.sql
 │   ├── 04_konto.sql
-│   └── 05_join_schema.sql
+│   ├── 05_join_schema.sql
+│   └── 06_adresse.sql
 └── scripts/
     └── insert-schleife.sh       # 40 × derselbe INSERT-Befehl
 ```

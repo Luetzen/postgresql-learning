@@ -11,6 +11,10 @@ docker compose exec db psql -U kurs -d kurs -c "TRUNCATE kurs;"
 Es gibt zwei Wege. **Weg A** macht es in einem Befehl, **Weg B** ist der aus der
 Schulung: derselbe Befehl, in einer Schleife, immer wieder.
 
+> Hier geht es um die **Menge**. Wenn die Werte nicht nur hochzählen sollen —
+> wenige verschiedene gegen viele, sortiert gegen gemischt —, dann weiter mit
+> [Teil 18](18-testdaten-erzeugen.md).
+
 ---
 
 ## Weg A — ein Befehl, 4 Mio. Zeilen

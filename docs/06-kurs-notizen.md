@@ -19,6 +19,8 @@ Bereits als eigenes Dokument angelegt:
 - [15 — REPACK: Tabelle neu schreiben statt `VACUUM FULL`](15-repack.md) — Ausblick, ab PostgreSQL 19
 - [16 — Einen Ausführungsplan lesen](16-explain-analyze-plan-lesen.md)
 - [17 — Nested Loop, Hash, Merge: welche Verbindungsmethode wann](17-join-methoden.md)
+- [18 — Testdaten erzeugen: Werte statt Zähler](18-testdaten-erzeugen.md)
+- [19 — Vom falschen Schätzwert zum parallelen Plan](19-schaetzung-und-parallele-plaene.md)
 
 ---
 
@@ -28,6 +30,8 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Eigene Messwerte eintragen (siehe unten)
 - [ ] Teil 7 durchspielen: zwei Sitzungen, Sperren, Isolationsstufen
 - [ ] Teil 17 durchspielen: die drei Methoden einmal erzwingen und vergleichen
+- [ ] Teil 18 durchspielen: `adresse` einmal in Blöcken und einmal gemischt füllen, `pg_stats.correlation` vergleichen
+- [ ] Teil 19 durchspielen: `CREATE STATISTICS` vorher/nachher messen
 
 ---
 
@@ -233,6 +237,21 @@ Ort: eigener Rechner · Datum: ____________________
 | `Rows Removed by Join Filter` bei `thema a JOIN thema b ON a.id < b.id` | |
 | Drei-Tabellen-Join (`kurs` → `kurs_thema` → `thema`): welcher Join-Knoten saß unter welchem, welche Methode hatte jeder — und wurde die `FROM`-Reihenfolge getauscht? | |
 | Sind alle drei Methoden verboten — kommt trotzdem ein Plan, und zu welchem `cost`? | |
+
+### Schätzung, Statistik und Parallelität (`adresse`)
+
+| Messung | Wert |
+|---------|------|
+| `WHERE stadt = 1` — geschätzt / tatsächlich | |
+| `WHERE stadt = 1 AND plz = 100` — geschätzt / tatsächlich | |
+| dasselbe nach `CREATE STATISTICS … (dependencies)` — `rows`, `cost`, Zeit | |
+| `GROUP BY stadt, plz` — geschätzte / tatsächliche Gruppenzahl | |
+| dasselbe nach `… (ndistinct)` | |
+| `SHOW parallel_setup_cost` gegen die Differenz `Gather` − Kindkosten | |
+| `Workers Planned` / `Workers Launched` bei leerem Server | |
+| dieselben zwei Zahlen, während andere Sitzungen arbeiten | |
+| `max_parallel_workers_per_gather = 0`: Zeit über fünf Läufe, Streuung | |
+| `Buffers: shared hit` im `Gather` und im `Seq Scan` — dieselbe Zahl? | |
 
 ---
 

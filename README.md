@@ -61,6 +61,8 @@ docker compose version
 | 18 | [docs/18-testdaten-erzeugen.md](docs/18-testdaten-erzeugen.md) | Testdaten mit Variation: `random()`, Modulo, `ARRAY`, `md5()`, UUIDs, `pgbench` |
 | 19 | [docs/19-schaetzung-und-parallele-plaene.md](docs/19-schaetzung-und-parallele-plaene.md) | Falsche Schätzung bei korrelierten Spalten, `CREATE STATISTICS`, `Gather` und Worker |
 | 20 | [docs/20-sicherung-und-wiederherstellung.md](docs/20-sicherung-und-wiederherstellung.md) | `pg_dump`/`pg_restore` für einzelne Objekte, `pg_basebackup`, WAL-Archiv, PITR mit `recovery_target*` |
+| 21 | [docs/21-streaming-replikation.md](docs/21-streaming-replikation.md) | Standby aufsetzen (`pg_basebackup -R`), `pg_stat_replication`, `pg_stat_wal_receiver`, synchron/asynchron, `pg_promote` |
+| 22 | [docs/22-logische-replikation.md](docs/22-logische-replikation.md) | `wal_level = logical`, Publication/Subscription, `REPLICA IDENTITY`, `test_decoding`, `pg_stat_subscription` |
 
 ---
 
@@ -327,6 +329,85 @@ docker compose exec -u postgres -T db pg_basebackup -U kurs -h /var/run/postgres
 Den Rest — Haltepunkt setzen, Unfall, zweite Instanz auf Port 5433,
 `recovery_target_name`, Log lesen, prüfen, auflösen — Schritt für Schritt:
 [docs/20-sicherung-und-wiederherstellung.md](docs/20-sicherung-und-wiederherstellung.md)
+
+---
+
+## Schnellstart (Teil 21 — Streaming-Replikation)
+
+Voraussetzung: `wal_level = replica` (Vorgabe), `max_wal_senders > 0`. Die
+Standby läuft als **zweite Instanz im selben Container**, Ausgangspunkt ist die
+Grundsicherung aus Teil 20 — diesmal aber **mit `-R`**:
+
+```bash
+docker compose exec -u postgres -T db mkdir -p /var/lib/postgresql/standby
+docker compose exec -u postgres -T db pg_basebackup -U kurs -h /var/run/postgresql \
+    -D /var/lib/postgresql/standby -X stream -c fast -P -R
+```
+
+```bash
+docker compose exec -u postgres db bash
+pg_ctl -D /var/lib/postgresql/standby -l /var/lib/postgresql/standby.log -o "-p 5433" start
+```
+
+Und dann auf beiden Instanzen nachsehen:
+
+```sql
+-- Primary (5432):
+SELECT application_name, state, sent_lsn, replay_lsn, replay_lag, sync_state
+FROM pg_stat_replication;
+
+-- Standby (5433):
+SELECT pg_is_in_recovery(), pg_last_wal_replay_lsn();
+SELECT status, sender_host, slot_name FROM pg_stat_wal_receiver;
+```
+
+Alle Einzelheiten: [docs/21-streaming-replikation.md](docs/21-streaming-replikation.md)
+
+---
+
+## Schnellstart (Teil 22 — Logische Replikation)
+
+Voraussetzung ist `wal_level = logical` (Neustart, kein Reload) — und eine
+**zweite** Datenbank daneben, denn auf sich selbst kann man nicht abonnieren:
+
+```sql
+-- einmalig in der Konfiguration:
+ALTER SYSTEM SET wal_level = 'logical';
+```
+
+```bash
+docker compose restart db
+docker compose exec -T db psql -U kurs -d postgres -c "CREATE DATABASE kurs_abo;"
+docker compose exec -T db psql -U kurs -d kurs     -f /sql/04_konto.sql
+docker compose exec -T db psql -U kurs -d kurs_abo -f /sql/04_konto.sql
+```
+
+Dann auf der Quelle veröffentlichen, auf dem Ziel abonnieren:
+
+```sql
+-- Quelle (kurs):
+CREATE PUBLICATION pub_konto FOR TABLE konto;
+
+-- Ziel (kurs_abo): erst leeren — sonst kollidiert die Startkopie mit den
+-- Zeilen aus 04_konto.sql
+TRUNCATE konto;
+CREATE SUBSCRIPTION sub_konto
+    CONNECTION 'host=/var/run/postgresql port=5432 dbname=kurs user=kurs'
+    PUBLICATION pub_konto;
+```
+
+Und auf beiden Seiten nachsehen:
+
+```sql
+-- Quelle: was ist veröffentlicht, welcher Slot liest?
+SELECT * FROM pg_publication_tables WHERE pubname = 'pub_konto';
+SELECT slot_name, active, confirmed_flush_lsn, wal_status FROM pg_replication_slots;
+
+-- Ziel: läuft der Abonnent?
+SELECT subname, received_lsn, last_msg_receipt_time FROM pg_stat_subscription;
+```
+
+Alle Einzelheiten: [docs/22-logische-replikation.md](docs/22-logische-replikation.md)
 
 ---
 

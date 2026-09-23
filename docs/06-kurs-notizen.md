@@ -22,6 +22,8 @@ Bereits als eigenes Dokument angelegt:
 - [18 — Testdaten erzeugen: Werte statt Zähler](18-testdaten-erzeugen.md)
 - [19 — Vom falschen Schätzwert zum parallelen Plan](19-schaetzung-und-parallele-plaene.md)
 - [20 — Wiederherstellung: ganzer Server, ein Zeitpunkt, einzelne Objekte](20-sicherung-und-wiederherstellung.md)
+- [21 — Streaming-Replikation: Primary, Standby, WAL sender](21-streaming-replikation.md)
+- [22 — Logische Replikation: Publication, Subscription, Logical Decoding](22-logische-replikation.md)
 
 ---
 
@@ -36,6 +38,12 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 20 durchspielen: Archiv einschalten, `pg_basebackup`, Unfall, zweite Instanz auf Port 5433
 - [ ] Teil 20: eine einzelne Tabelle aus dem Dump zurückholen (20.2) und aus der wiederhergestellten Instanz kopieren (20.6, Schritt 7)
 - [ ] Teil 20: den Kurs-Ablauf in-place nachvollziehen — einmal mit `rm -rf`, einmal mit `mv` — und notieren, was das Log jeweils sagt
+- [ ] Teil 21 durchspielen: Standby als zweite Instanz auf Port 5433 aufsetzen, `pg_stat_replication` und `pg_stat_wal_receiver` vergleichen
+- [ ] Teil 21: `pg_wal_replay_pause()` / `pg_wal_replay_resume()` und die Wirkung auf `replay_lag` beobachten
+- [ ] Teil 21: ein `COMMIT` mit gesetztem `synchronous_standby_names` gegen den asynchronen Fall messen
+- [ ] Teil 22 durchspielen: `wal_level = logical`, zweite Datenbank `kurs_abo`, Publication/Subscription aufsetzen
+- [ ] Teil 22: `UPDATE`/`DELETE` ohne Replica Identity provozieren und die Meldung auf der Quelle finden
+- [ ] Teil 22: `pg_logical_slot_peek_changes` gegen `pg_logical_slot_get_changes` vergleichen
 
 ---
 
@@ -279,6 +287,45 @@ Ort: eigener Rechner · Datum: ____________________
 | Steht die Tabelle nach Schritt 7 wirklich mit denselben Zeilen in der laufenden Instanz? | |
 | Was unterscheidet `pg_controldata` in `base` von dem in `restore`? | |
 | Wiederherstellung `in-place` (Kurs): erreichtes Ziel laut Log gegen den notierten Zeitstempel | |
+
+### Replikation (Standby, WAL-Streaming)
+
+| Messung | Wert |
+|---------|------|
+| `SHOW wal_level;` / `SHOW max_wal_senders;` / `SHOW hot_standby;` | |
+| Dauer von `pg_basebackup … -R` und Größe von `standby` | |
+| erste Log-Zeile des Streamens (Segment, Sender) | |
+| Abstand `sent_lsn` ↔ `replay_lsn` bei Ruhe / unter Last | |
+| Dauer eines `COMMIT`, asynchron gegen `synchronous_standby_names` gesetzt | |
+| `pg_wal`-Größe, solange ein ungenutzter Slot existiert | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| `state` und `sync_state` in `pg_stat_replication` im Normalbetrieb | |
+| Was passiert mit `replay_lag`, solange `pg_wal_replay_pause()` aktiv ist? | |
+| `application_name` der Standby gegen den Eintrag in `synchronous_standby_names` | |
+| Was steht im Log der Standby bei falschem `primary_conninfo` oder belegtem Port? | |
+| Was meldet `pg_stat_wal_receiver` bei laufender vs. gestoppter Standby? | |
+| Ändert `pg_promote()` den `status` in `pg_stat_wal_receiver`? | |
+
+### Logische Replikation (Publication, Subscription, Slot)
+
+| Messung | Wert |
+|---------|------|
+| Dauer der Startkopie (`copy_data`) und Zeilen im Ziel danach | |
+| `srsubstate` in `pg_subscription_rel` während und nach der Kopie | |
+| `confirmed_flush_lsn` des Slots vor/nach `pg_logical_slot_get_changes` | |
+| `pg_wal`-Größe, solange ein Abonnement deaktiviert ist und der Slot bleibt | |
+| Verzögerung Quelle → Ziel unter Last | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| `wal_level` vor und nach dem Umstellen — was fordert `logical` zusätzlich? | |
+| genaue Meldung bei `UPDATE` ohne Replica Identity — auf welcher Seite, und wann? | |
+| `pg_stat_subscription_stats` vor/nach einem erzeugten Fehler | |
+| Erscheint ein `COMMIT` mit mehreren Änderungen als eine Gruppe im `test_decoding`-Ausgang? | |
+| Steht in `pg_stat_replication` etwas, wenn nur logisch repliziert wird? | |
+| Was passiert mit den Zeilen im Ziel, wenn du auf der Quelle `TRUNCATE` machst? | |
 
 ---
 

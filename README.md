@@ -55,6 +55,8 @@ docker compose version
 | 12 | [docs/12-mvcc.md](docs/12-mvcc.md) | `ctid`, `xmin`, `xmax`, Schnappschüsse, `pg_xact_status` |
 | 13 | [docs/13-vacuum-und-tote-zeilen.md](docs/13-vacuum-und-tote-zeilen.md) | `VACUUM`, tote Zeilen, Bloat, autovacuum |
 | 14 | [docs/14-konfiguration.md](docs/14-konfiguration.md) | `postgresql.conf`, `ALTER SYSTEM`, `pg_settings`, Reload oder Neustart |
+| 15 | [docs/15-repack.md](docs/15-repack.md) | `REPACK` (ab PostgreSQL 19): Neuschreiben, `CONCURRENTLY`, `USING INDEX` |
+| 16 | [docs/16-explain-analyze-plan-lesen.md](docs/16-explain-analyze-plan-lesen.md) | Plan lesen: `cost`, `rows` gegen `actual`, `loops`, `Buffers`, `Batches` |
 
 ---
 

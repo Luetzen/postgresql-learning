@@ -16,6 +16,8 @@ Bereits als eigenes Dokument angelegt:
 - [12 — MVCC: Zeilenversionen, `xmin`/`xmax` und alte Werte](12-mvcc.md)
 - [13 — Tote Zeilen, VACUUM und Bloat](13-vacuum-und-tote-zeilen.md)
 - [14 — Konfiguration: wo Einstellungen stehen und wann sie wirken](14-konfiguration.md)
+- [15 — REPACK: Tabelle neu schreiben statt `VACUUM FULL`](15-repack.md) — Ausblick, ab PostgreSQL 19
+- [16 — Einen Ausführungsplan lesen](16-explain-analyze-plan-lesen.md)
 
 ---
 
@@ -187,6 +189,32 @@ Ort: eigener Rechner · Datum: ____________________
 | `pending_restart` nach `ALTER SYSTEM SET autovacuum_naptime` | |
 | `source` von `work_mem` nach einem `SET` in der Sitzung | |
 | Steht nach dem Aufräumen noch etwas auf `source <> 'default'`? | |
+
+### REPACK (ab PostgreSQL 19)
+
+| Messung | Wert |
+|---------|------|
+| `pg_total_relation_size('vactest')` frisch angelegt | |
+| nach `UPDATE vactest SET id = id + 1;` | |
+| nach `REPACK (ANALYZE) vactest` | |
+| dasselbe über `VACUUM FULL` auf `vactest_full` | |
+| `pg_indexes_size` vor und nach dem Neu-Schreiben | |
+| `relfrozenxid` vor und nach dem Lauf — für beide Befehle | |
+| Zeigt `\dt+` dieselbe Größe wie `pg_total_relation_size`? | |
+| Meldet `pg_stat_progress_repack` bei `CONCURRENTLY` etwas? | |
+
+### Pläne lesen (`EXPLAIN`)
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Größter Faktor zwischen geschätzter und tatsächlicher Zeilenzahl | |
+| Knoten mit `loops > 1` — und seine Gesamtzeit (`actual time` × `loops`) | |
+| `Buffers`: `hit` und `read` beim ersten und beim zweiten Lauf | |
+| `Batches` im `Hash`-Knoten | |
+| `Memory Usage` gegen `work_mem` | |
+| Bleibt der `Seq Scan` mit `SET enable_seqscan = off` stehen? | |
+| Laufzeitunterschied `TIMING ON` gegen `TIMING OFF` | |
+| Blöcke in der Wurzel gegen die Summe ihrer Kinder | |
 
 ---
 

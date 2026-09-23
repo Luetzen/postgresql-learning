@@ -60,6 +60,7 @@ docker compose version
 | 17 | [docs/17-join-methoden.md](docs/17-join-methoden.md) | Nested Loop, Hash Join, Merge Join: wann welche, und was der Index daran ändert |
 | 18 | [docs/18-testdaten-erzeugen.md](docs/18-testdaten-erzeugen.md) | Testdaten mit Variation: `random()`, Modulo, `ARRAY`, `md5()`, UUIDs, `pgbench` |
 | 19 | [docs/19-schaetzung-und-parallele-plaene.md](docs/19-schaetzung-und-parallele-plaene.md) | Falsche Schätzung bei korrelierten Spalten, `CREATE STATISTICS`, `Gather` und Worker |
+| 20 | [docs/20-sicherung-und-wiederherstellung.md](docs/20-sicherung-und-wiederherstellung.md) | `pg_dump`/`pg_restore` für einzelne Objekte, `pg_basebackup`, WAL-Archiv, PITR mit `recovery_target*` |
 
 ---
 
@@ -293,6 +294,39 @@ EXPLAIN (ANALYZE) SELECT * FROM adresse WHERE stadt = 1 AND plz = 100;
 ```
 
 Alle Einzelheiten: [docs/19-schaetzung-und-parallele-plaene.md](docs/19-schaetzung-und-parallele-plaene.md)
+
+---
+
+## Schnellstart (Teil 20 — Sicherung und Wiederherstellung)
+
+Erst die logische Sicherung — daraus lassen sich **einzelne Objekte** zurückholen:
+
+```bash
+docker compose exec -u postgres -T db mkdir -p /var/lib/postgresql/backup
+docker compose exec -u postgres -T db pg_dump -U kurs -d kurs -Fc -f /var/lib/postgresql/backup/kurs.dump
+docker compose exec -T db pg_restore -l /var/lib/postgresql/backup/kurs.dump
+```
+
+Für den Zeitpunkt davor braucht es WAL-Archivierung und eine Grundsicherung:
+
+```sql
+ALTER SYSTEM SET archive_mode = on;
+ALTER SYSTEM SET archive_command = 'test ! -f /var/lib/postgresql/walarchiv/%f && cp %p /var/lib/postgresql/walarchiv/%f';
+ALTER SYSTEM SET archive_timeout = '60s';
+```
+
+```bash
+docker compose exec -u postgres -T db mkdir -p /var/lib/postgresql/walarchiv
+docker compose restart db
+```
+
+```bash
+docker compose exec -u postgres -T db pg_basebackup -U kurs -h /var/run/postgresql -D /var/lib/postgresql/base -X stream -c fast -P
+```
+
+Den Rest — Haltepunkt setzen, Unfall, zweite Instanz auf Port 5433,
+`recovery_target_name`, Log lesen, prüfen, auflösen — Schritt für Schritt:
+[docs/20-sicherung-und-wiederherstellung.md](docs/20-sicherung-und-wiederherstellung.md)
 
 ---
 

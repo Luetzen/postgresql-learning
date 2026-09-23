@@ -21,6 +21,7 @@ Bereits als eigenes Dokument angelegt:
 - [17 — Nested Loop, Hash, Merge: welche Verbindungsmethode wann](17-join-methoden.md)
 - [18 — Testdaten erzeugen: Werte statt Zähler](18-testdaten-erzeugen.md)
 - [19 — Vom falschen Schätzwert zum parallelen Plan](19-schaetzung-und-parallele-plaene.md)
+- [20 — Wiederherstellung: ganzer Server, ein Zeitpunkt, einzelne Objekte](20-sicherung-und-wiederherstellung.md)
 
 ---
 
@@ -32,6 +33,9 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 17 durchspielen: die drei Methoden einmal erzwingen und vergleichen
 - [ ] Teil 18 durchspielen: `adresse` einmal in Blöcken und einmal gemischt füllen, `pg_stats.correlation` vergleichen
 - [ ] Teil 19 durchspielen: `CREATE STATISTICS` vorher/nachher messen
+- [ ] Teil 20 durchspielen: Archiv einschalten, `pg_basebackup`, Unfall, zweite Instanz auf Port 5433
+- [ ] Teil 20: eine einzelne Tabelle aus dem Dump zurückholen (20.2) und aus der wiederhergestellten Instanz kopieren (20.6, Schritt 7)
+- [ ] Teil 20: den Kurs-Ablauf in-place nachvollziehen — einmal mit `rm -rf`, einmal mit `mv` — und notieren, was das Log jeweils sagt
 
 ---
 
@@ -252,6 +256,29 @@ Ort: eigener Rechner · Datum: ____________________
 | dieselben zwei Zahlen, während andere Sitzungen arbeiten | |
 | `max_parallel_workers_per_gather = 0`: Zeit über fünf Läufe, Streuung | |
 | `Buffers: shared hit` im `Gather` und im `Seq Scan` — dieselbe Zahl? | |
+
+### Wiederherstellung (Sicherung, WAL-Archiv, PITR)
+
+| Messung | Wert |
+|---------|------|
+| `pg_size_pretty(pg_database_size('kurs'))` | |
+| Größe des Dumps (`-Fc`) — und Dauer von `pg_dump` | |
+| Größe des Base-Backups und Dauer von `pg_basebackup` | |
+| Meldung von `pg_verifybackup` — und nach einer absichtlich veränderten Datei in `base` | |
+| `archived_count` / `failed_count` in `pg_stat_archiver` vor und nach `pg_switch_wal()` | |
+| Was passiert bei `archive_command` mit `exit 1`: wächst `pg_wal`? | |
+| `last_failed_wal` und `last_failed_time` in `pg_stat_archiver` | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Erste Log-Zeile der Wiederherstellung, und die Zeile mit „recovery stopping" | |
+| Erreichte LSN am Haltepunkt gegen die LSN aus `pg_create_restore_point()` | |
+| `pg_is_in_recovery()` und `pg_last_xact_replay_timestamp()` vor und nach `pg_wal_replay_resume()` | |
+| Ist der Stand nach `recovery_target_time` derselbe wie nach `recovery_target_name`? | |
+| Was ändert `recovery_target_inclusive = off` bei einem `DELETE` in derselben Sekunde? | |
+| Steht die Tabelle nach Schritt 7 wirklich mit denselben Zeilen in der laufenden Instanz? | |
+| Was unterscheidet `pg_controldata` in `base` von dem in `restore`? | |
+| Wiederherstellung `in-place` (Kurs): erreichtes Ziel laut Log gegen den notierten Zeitstempel | |
 
 ---
 

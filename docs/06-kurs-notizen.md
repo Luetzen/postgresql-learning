@@ -18,6 +18,7 @@ Bereits als eigenes Dokument angelegt:
 - [14 — Konfiguration: wo Einstellungen stehen und wann sie wirken](14-konfiguration.md)
 - [15 — REPACK: Tabelle neu schreiben statt `VACUUM FULL`](15-repack.md) — Ausblick, ab PostgreSQL 19
 - [16 — Einen Ausführungsplan lesen](16-explain-analyze-plan-lesen.md)
+- [17 — Nested Loop, Hash, Merge: welche Verbindungsmethode wann](17-join-methoden.md)
 
 ---
 
@@ -26,6 +27,7 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Weitere Kursinhalte ergänzen, sobald der Link erreichbar ist
 - [ ] Eigene Messwerte eintragen (siehe unten)
 - [ ] Teil 7 durchspielen: zwei Sitzungen, Sperren, Isolationsstufen
+- [ ] Teil 17 durchspielen: die drei Methoden einmal erzwingen und vergleichen
 
 ---
 
@@ -215,6 +217,22 @@ Ort: eigener Rechner · Datum: ____________________
 | Bleibt der `Seq Scan` mit `SET enable_seqscan = off` stehen? | |
 | Laufzeitunterschied `TIMING ON` gegen `TIMING OFF` | |
 | Blöcke in der Wurzel gegen die Summe ihrer Kinder | |
+
+### Join-Methoden (`Nested Loop`, `Hash Join`, `Merge Join`)
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Methode für `thema` × `kurs_thema`, und welche Seite ist der `Hash`-Knoten? | |
+| dieselbe Abfrage mit `enable_hashjoin = off` / `enable_mergejoin = off` | |
+| dieselbe Abfrage nach `CREATE INDEX` auf `kurs_thema (thema_id)` + `ANALYZE` | |
+| `loops` des inneren Knotens im erzwungenen Nested Loop, und `actual time` × `loops` | |
+| `Memory Usage` und `Batches` im Hash-Knoten bei Vorgabe-`work_mem` | |
+| dasselbe mit `work_mem = '64MB'` — fällt `Batches` auf 1? | |
+| `Merge Join` erzwungen: `Sort`-Knoten vorhanden, mit und ohne Index auf `kurs_id`? | |
+| `SHOW work_mem` — passt die Hash-Tabelle laut `Memory Usage` hinein? | |
+| `Rows Removed by Join Filter` bei `thema a JOIN thema b ON a.id < b.id` | |
+| Drei-Tabellen-Join (`kurs` → `kurs_thema` → `thema`): welcher Join-Knoten saß unter welchem, welche Methode hatte jeder — und wurde die `FROM`-Reihenfolge getauscht? | |
+| Sind alle drei Methoden verboten — kommt trotzdem ein Plan, und zu welchem `cost`? | |
 
 ---
 

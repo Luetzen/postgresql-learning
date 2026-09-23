@@ -57,6 +57,7 @@ docker compose version
 | 14 | [docs/14-konfiguration.md](docs/14-konfiguration.md) | `postgresql.conf`, `ALTER SYSTEM`, `pg_settings`, Reload oder Neustart |
 | 15 | [docs/15-repack.md](docs/15-repack.md) | `REPACK` (ab PostgreSQL 19): Neuschreiben, `CONCURRENTLY`, `USING INDEX` |
 | 16 | [docs/16-explain-analyze-plan-lesen.md](docs/16-explain-analyze-plan-lesen.md) | Plan lesen: `cost`, `rows` gegen `actual`, `loops`, `Buffers`, `Batches` |
+| 17 | [docs/17-join-methoden.md](docs/17-join-methoden.md) | Nested Loop, Hash Join, Merge Join: wann welche, und was der Index daran ändert |
 
 ---
 
@@ -223,6 +224,34 @@ Alle Einzelheiten: [docs/14-konfiguration.md](docs/14-konfiguration.md)
 
 ---
 
+## Schnellstart (Teil 17 — Join-Methoden)
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/05_join_schema.sql
+```
+
+Und dann in `psql`:
+
+```sql
+ANALYZE thema, kurs_thema;
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT t.bezeichnung, count(*)
+FROM thema t
+JOIN kurs_thema kt ON kt.thema_id = t.id
+GROUP BY t.bezeichnung;
+
+-- dieselbe Abfrage, aber ohne Wahlmöglichkeit für den Planer:
+SET enable_hashjoin = off;
+SET enable_mergejoin = off;
+EXPLAIN (ANALYZE, BUFFERS) SELECT t.bezeichnung, count(*) FROM thema t JOIN kurs_thema kt ON kt.thema_id = t.id GROUP BY t.bezeichnung;
+RESET ALL;
+```
+
+Alle Übungen: [docs/17-join-methoden.md](docs/17-join-methoden.md)
+
+---
+
 ## Struktur
 
 ```
@@ -234,7 +263,8 @@ postgresql-learning/
 │   ├── 02_insert_4mio.sql
 │   ├── 02b_insert_100k_block.sql
 │   ├── 03_abfragen.sql
-│   └── 04_konto.sql
+│   ├── 04_konto.sql
+│   └── 05_join_schema.sql
 └── scripts/
     └── insert-schleife.sh       # 40 × derselbe INSERT-Befehl
 ```

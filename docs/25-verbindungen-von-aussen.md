@@ -293,6 +293,20 @@ wiederholt. Und wenn du sehen willst, **wie** der Server die Zeilen abarbeitet,
 statt es zu vermuten: `log_connections` einschalten (`runtime-config-logging.html`,
 oben verlinkt) und ins Log schauen — dort steht die Verbindung mit ihrer Adresse.
 
+Der Server nennt dir die Zeile sogar beim Namen. Wenn eine Authentifizierung
+fehlschlägt, steht im Log neben der `FATAL`-Zeile ein `DETAIL`, das **Datei und
+Zeilennummer** der Zeile angibt, die gepasst hat:
+
+```text
+FATAL:  Peer authentication failed for user "sepp"
+DETAIL:  Connection matched file "/var/lib/pgsql/19/data/pg_hba.conf" line 117: "local all all peer"
+```
+
+Das ist die Abkürzung für die ganze Sucherei der Tabelle oben: nicht raten, welche
+Zeile gegriffen hat — **nachlesen**. Im Beispiel sieht man gleich beides: die
+passende Zeile ist `local all all peer`, und `peer` vergleicht den
+Betriebssystem-Benutzer mit dem Rollennamen — `postgres` ist nicht `sepp` (25.4).
+
 ---
 
 ## 25.4 Tor 3, zweiter Teil: Passwort und Methode
@@ -402,6 +416,7 @@ Socket-Verbindung.** Leer heißt hier nicht „kein Client", sondern „kein Net
 | „no pg_hba.conf entry for host …, user …, database …" | keine passende Zeile für diese Adresse/diesen Benutzer | `SHOW hba_file;`, Datei **von oben nach unten** (25.3) |
 | dieselbe Meldung mit „no encryption" | es passt nur eine `hostssl`-Zeile, der Client kam ohne SSL | `sslmode` auf der Client-Seite, 25.4 |
 | `password authentication failed` | Zeile passt, Passwort falsch — oder gar keins gesetzt | `ALTER ROLE … PASSWORD`, `password_encryption` (24.4) |
+| `FATAL: Peer authentication failed for user …` | die Zeile ist `peer`, aber der Betriebssystem-Benutzer heißt anders als die Rolle | das `DETAIL` im Log nennt Datei und Zeile, 25.3a und 25.4 |
 | Passwort wird nie abgefragt | weiter oben steht eine `trust`-Zeile, die schon passt | dieselbe Datei, Reihenfolge |
 | verlangt **kein** Passwort, obwohl TCP und eine neue `scram`-Zeile | die Verbindung kam von Loopback (oder über den Socket) — die `127.0.0.1/32`-Zeile steht weiter oben und passt zuerst | `client_addr` in `pg_stat_activity`, 25.3a |
 | „role … does not exist" beim Anmelden | die Rolle gibt es auf **dieser** Instanz nicht (zwei Instanzen!) | `\du` **auf dem Ziel**, `pg_is_in_recovery()` |

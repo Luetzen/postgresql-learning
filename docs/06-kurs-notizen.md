@@ -27,6 +27,7 @@ Bereits als eigenes Dokument angelegt:
 - [23 — WAL und Haltbarkeit: die Schalter aus dem `# WRITE-AHEAD LOG`-Block](23-wal-und-haltbarkeit.md)
 - [24 — Rollen und Rechte: wer darf was](24-rollen-und-rechte.md)
 - [25 — Verbindungen von außen: `listen_addresses`, Port, `pg_hba.conf`](25-verbindungen-von-aussen.md)
+- [26 — TLS: verschlüsselte Verbindungen (`ssl = on`, Zertifikate, `sslmode`)](26-tls-verschluesselte-verbindungen.md)
 
 ---
 
@@ -63,6 +64,11 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 25: dieselbe Rolle über `127.0.0.1` und über die LAN-Adresse verbinden (25.3a) — wann wird das Passwort verlangt, und welche `hba`-Zeile hat jeweils gegriffen?
 - [ ] Teil 25: über Port 5433 (Standby) verbinden und `pg_is_in_recovery()` gegen den Schreibversuch stellen
 - [ ] Teil 25: nach dem Aufräumen prüfen, ob `listen_addresses` wieder die Vorgabe ist und die Testzeile wirklich weg ist
+- [ ] Teil 26 durchspielen: Zertifikat erzeugen, `ssl = on`, Reload — was steht in `\conninfo` und in `pg_stat_ssl`?
+- [ ] Teil 26: `server.key` absichtlich auf `0644` setzen und den Server **starten** (nicht reloaden) — was steht im Log?
+- [ ] Teil 26: `sslmode=verify-full` mit einem `CN` probieren, das nicht zum Namen in `-h` passt — Meldung wörtlich notieren
+- [ ] Teil 26: `hostssl`-Zeile anlegen und mit `sslmode=disable` verbinden — was steht im Log, und wo steht es **nicht**?
+- [ ] Teil 26: dieselbe Rolle über Socket und über TCP verbinden — in welchem Fall fehlt die TLS-Zeile in `\conninfo`?
 
 ---
 

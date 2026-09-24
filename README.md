@@ -66,6 +66,7 @@ docker compose version
 | 23 | [docs/23-wal-und-haltbarkeit.md](docs/23-wal-und-haltbarkeit.md) | Der `# WRITE-AHEAD LOG`-Block: `wal_level`, `fsync`, `synchronous_commit`, `wal_sync_method`, `full_page_writes`, `wal_log_hints`, `wal_compression` |
 | 24 | [docs/24-rollen-und-rechte.md](docs/24-rollen-und-rechte.md) | `CREATE ROLE`/`CREATE USER`, die Rollenattribute, `GRANT`/`REVOKE`, `pg_hba.conf`, Mitgliedschaft und `SET ROLE`, vordefinierte Rollen |
 | 25 | [docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md) | `listen_addresses`, Port, `pg_hba.conf` für fremde Hosts, `pg_isready`, `\conninfo`, `client_addr` |
+| 26 | [docs/26-tls-verschluesselte-verbindungen.md](docs/26-tls-verschluesselte-verbindungen.md) | `ssl = on`, Zertifikat und Schlüssel mit `openssl`, Rechte, `pg_stat_ssl`, `sslmode`, `hostssl` |
 
 ---
 
@@ -566,6 +567,59 @@ SELECT current_user, inet_server_addr(), inet_server_port();
 
 Die drei Tore, `pg_isready` als Suchwerkzeug und das Aufräumen:
 [docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md)
+
+---
+
+## Schnellstart (Teil 26 — TLS)
+
+Erst nachsehen, was gilt — `ssl` ist reloadbar, hier ist also **kein** Neustart nötig:
+
+```sql
+SHOW ssl;
+SHOW ssl_cert_file;
+SHOW ssl_key_file;
+SELECT name, setting, context, source, pending_restart
+FROM pg_settings WHERE name IN ('ssl', 'ssl_cert_file', 'ssl_key_file') ORDER BY name;
+```
+
+Zertifikat und Schlüssel erzeugen — **im Datenverzeichnis**, als `postgres` (im
+Container: `docker compose exec -u postgres db bash`, dort heißt der Superuser `kurs`):
+
+```bash
+openssl req -new -x509 -days 365 -nodes -text -out server.crt \
+  -keyout server.key -subj "/CN=kurs-00"
+chmod og-rwx server.key
+```
+
+```ini
+# postgresql.conf
+ssl = on
+```
+
+```sql
+SELECT pg_reload_conf();
+SHOW ssl;
+```
+
+Der Nachweis, dass es diese Sitzung wirklich betrifft:
+
+```text
+\conninfo
+```
+
+```sql
+SELECT a.usename, a.client_addr, s.ssl, s.version, s.cipher, s.client_dn
+FROM pg_stat_activity a LEFT JOIN pg_stat_ssl s USING (pid);
+```
+
+Und auf der Client-Seite der Modus — die Vorgabe `prefer` ist keine Empfehlung:
+
+```bash
+psql "host=kurs-00 dbname=kurs user=sepp sslmode=require"
+```
+
+Die drei Angriffe, `sslmode` in allen sechs Werten, `hostssl` und das Aufräumen:
+[docs/26-tls-verschluesselte-verbindungen.md](docs/26-tls-verschluesselte-verbindungen.md)
 
 ---
 

@@ -255,15 +255,3 @@ erwischen.
 - Sperren allgemein: https://www.postgresql.org/docs/18/explicit-locking.html
   (13.3, mit 13.3.3 „Page-Level Locks")
 - `pg_locks`: https://www.postgresql.org/docs/18/view-pg-locks.html
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Welcher `wait_event_type` / `wait_event` steht bei dir, während `pg_sleep(5)`
-  läuft?
-- Dasselbe beim wartenden `UPDATE` aus 7.6 — und was steht bei der **haltenden**
-  Sitzung?
-- Was steht bei der Sitzung, die `BEGIN` gesagt hat und dann nichts tut?
-- Welche `backend_type`-Zeilen haben bei dir keine `datname`, und auf welchem
-  Warteereignis stehen sie?

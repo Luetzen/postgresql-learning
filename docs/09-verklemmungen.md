@@ -426,15 +426,3 @@ Und Kontrolle, ob in der Sitzung noch etwas verstellt ist:
 ```sql
 SHOW ALL;
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Wie sieht die Log-Zeile bei einem Deadlock bei dir aus — steht die **Abfrage**
-  darin oder nur der Wartegraph?
-- Wie lange hat es gedauert, bis der Server die Verklemmung erkannt hat
-  (`deadlock_timeout`-Wert und gemessene Zeit)?
-- Kommt bei `log_lock_waits` eine Zeile, und nach welcher Wartezeit?
-- Was gibt `SELECT * FROM konto … FOR UPDATE SKIP LOCKED` zurück, während die
-  andere Sitzung eine Zeile hält?

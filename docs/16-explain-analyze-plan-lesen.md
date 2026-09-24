@@ -482,28 +482,3 @@ Bewusst offengelassen, kommt nach und nach dazu:
 (`track_io_timing` steht nicht mehr hier — es wird jetzt in 16.5b benutzt.)
 
 Referenz: https://www.postgresql.org/docs/18/monitoring-stats.html
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Der größte Abstand zwischen geschätzter und tatsächlicher Zeilenzahl, den du
-  findest — und um welchen Faktor?
-- Steht bei irgendeinem Knoten `loops > 1`? Wenn ja: wie viel später ist dieser
-  Knoten dann *wirklich* fertig?
-- `Buffers: shared hit` und `read` beim ersten und beim zweiten Lauf desselben
-  Befehls — was ändert sich?
-- `Batches` in einem `Hash`-Knoten: größer als 1, oder nicht?
-- Wie ändert sich der Plan mit `SET enable_seqscan = off` — und bleibt der
-  `Seq Scan` irgendwo trotzdem stehen?
-- Wie viel Zeit kostet `TIMING ON` gegenüber `TIMING OFF` bei einer winzigen
-  Abfrage?
-- Die Zahl der Blöcke in der Wurzel gegen die Summe ihrer Kinder: geht das auf?
-- Welcher Knoten hat die größte **eigene** Zeit (Wert minus Kinder) — und wie viel
-  Prozent der Gesamtzeit ist das?
-- Ein Ausdruck in einer `WHERE`-Klausel: die Schätzung vor und nach
-  `CREATE STATISTICS` — ändert sich dabei der `cost`?
-- Steht irgendwo `Rows Removed by Join Filter`? Wie viele Paarungen waren es
-  insgesamt, also `rows` plus die entfernten?
-- `I/O Timings` gegen `Execution Time`: CPU-gebunden oder I/O-gebunden?
-- Derselbe Befehl dreimal: wie stark streuen die Zeiten?

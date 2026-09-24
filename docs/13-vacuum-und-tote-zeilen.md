@@ -394,16 +394,3 @@ Für `kurs` reicht es, den Zustand aus Teil 5 wiederherzustellen:
 VACUUM FULL kurs;
 ANALYZE kurs;
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `n_dead_tup` vor und nach `VACUUM` (nach 13.0)
-- Was `VACUUM VERBOSE konto;` gemeldet hat: wie viele tote Zeilenversionen, in
-  wie vielen Seiten?
-- Wie viele tote Zeilen waren **„cannot be removed yet"**, solange Fenster A offen
-  war — und wie viele danach?
-- `pg_relation_size('kurs')` vor dem `UPDATE`, nach dem `UPDATE`, nach `VACUUM`,
-  nach `VACUUM FULL`
-- Wann hat autovacuum bei dir zugeschlagen (`last_autovacuum`)?

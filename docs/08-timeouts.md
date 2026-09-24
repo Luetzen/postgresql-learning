@@ -339,15 +339,3 @@ SHOW ALL;
 ```
 
 `SHOW ALL` listet jede Einstellung mit ihrem aktuellen Wert.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Die Vorgabewerte auf dem eigenen Server (`SHOW …`)
-- Ab welcher Dauer bricht `statement_timeout` ab, und was passiert dabei mit einer
-  offenen Transaktion?
-- Zählt die Wartezeit auf eine Sperre in `statement_timeout` mit?
-- Wie lange hat es gedauert, bis `idle_in_transaction_session_timeout` die Sitzung
-  beendet hat — und was stand danach in `konto`?
-- Läuft `transaction_timeout` wirklich vor den beiden anderen ab?

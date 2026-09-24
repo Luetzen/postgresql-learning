@@ -663,23 +663,3 @@ Themas:
 
 Das ist ein eigener Teil, nicht ein Abschnitt dieses hier. Der Zweck des Ausblicks
 ist nur: **wenn dir `BYPASSRLS` später begegnet, weißt du schon, wozu.**
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `\du` und `\du+` auf **deiner** Installation: welche Attribute stehen beim
-  Superuser, und was zeigen die beiden Varianten unterschiedlich?
-- `\h CREATE USER` gegen `\h CREATE ROLE` — welche Zeile(n) unterscheiden sich?
-- `SHOW password_encryption;` — welcher Wert, und wie sieht ein damit gesetztes
-  Passwort in `pg_roles.rolpassword` aus (Anfang genügt: welches Verfahren)?
-- `SELECT * FROM pg_auth_members;` — welche Spalten hat die Sicht bei dir?
-- Die `pg_hba.conf`, die `SHOW hba_file;` nennt: welche Methode steht in der ersten
-  `local`-Zeile, und welche Rolle hätte ohne Passwort hineingekommen?
-- Die Meldungen **wörtlich** notieren — welche kommt beim Verbinden, welche beim
-  `SELECT`? Sie sind der einzige Weg, die beiden Ebenen auseinanderzuhalten.
-- `CONNECTION LIMIT` auf einen kleinen Wert gesetzt: was steht auf der Client-Seite
-  und was im Log des Servers?
-- Was zeigt `\drds`, nachdem mit `ALTER ROLE … SET` gearbeitet wurde?
-- Was sagt `DROP ROLE` genau, wenn die Rolle im aktuellen Datenbankkontext noch
-  Objekte besitzt — und in welcher Reihenfolge arbeitest du dich dann durch?

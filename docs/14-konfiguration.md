@@ -246,13 +246,3 @@ ORDER BY name;
 
 Das ist die Abfrage, die man nach jedem Experiment laufen lässt: sie zeigt genau
 das, was man selbst verstellt hat.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `SHOW config_file;` — welcher Pfad kommt bei dir heraus?
-- `context` und `source` von `autovacuum_max_workers` (Neustart nötig?)
-- Was ändert sich in `pg_settings`, wenn du eine Tabelle mit
-  `autovacuum_vacuum_scale_factor` versiehst?
-- Bleibt nach dem Aufräumen etwas in `source` ungleich `default` stehen?

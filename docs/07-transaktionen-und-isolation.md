@@ -1068,15 +1068,3 @@ DROP TABLE konto;
 Und grundsätzlich: eine offene Transaktion erkennt man am `*` im Prompt. Ein
 `\q` beendet die Sitzung und rollt sie dabei zurück. Trotzdem ist es sauberer,
 selbst `ROLLBACK` zu tippen — dann *weiß* man, was passiert ist.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-Die Zahlen sind auf dem jeweiligen Rechner zu messen, nicht hier
-hineinzuschreiben. Dort die leeren Tabellen dafür:
-
-- Ändert sich die Summe innerhalb / außerhalb einer Transaktion?
-- Was passiert in `READ COMMITTED`, `REPEATABLE READ`, `SERIALIZABLE` bei
-  gleichzeitigen Zugriffen — und welcher Fehlercode kommt?
-- Wie lange hat es gedauert, bis ein wartendes `UPDATE` weiterlief?

@@ -268,13 +268,3 @@ FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
 JOIN pg_class t ON t.oid = i.indrelid
 WHERE t.relname = 'kurs';
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Wie lange dauerte `CREATE INDEX CONCURRENTLY` auf `kurs`, bis zum Abbruch?
-- Wie groß war der `INVALID`-Index danach?
-- Was stand in `pg_stat_progress_create_index` während des Builds — und auf wen
-  hat er gewartet?
-- Kam beim zweiten Versuch ein `Index Scan` statt `Seq Scan`?

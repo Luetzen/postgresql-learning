@@ -406,22 +406,3 @@ docker compose exec -T db psql -U kurs -d kurs     -c "SELECT slot_name FROM pg_
 
 Ein Slot, den niemand mehr liest, hält WAL für immer zurück — dieselbe Regel wie
 in 21.10.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `SHOW wal_level;` vor und nach dem Umstellen — was fordert `logical` zusätzlich?
-- Wie lange dauert die Startkopie (`copy_data`), und was steht währenddessen in
-  `pg_subscription_rel.srsubstate`?
-- Was zeigt `pg_logical_slot_peek_changes` bei einem `UPDATE` — und was ändert
-  sich nach `pg_logical_slot_get_changes` an `confirmed_flush_lsn`?
-- Die genaue Meldung, wenn `UPDATE` ohne Replica Identity läuft — auf welcher
-  Seite, und wie schnell?
-- Steht der Abonnent bei einem `COMMIT` mit mehreren Änderungen als **eine**
-  Gruppe im `test_decoding`-Ausgang?
-- `pg_stat_subscription_stats` vor und nach einem absichtlich erzeugten Fehler
-- Was passiert mit `pg_wal` auf der Quelle, wenn du das Abonnement deaktivierst
-  (`ALTER SUBSCRIPTION … DISABLE`) und den Slot stehen lässt?
-- Was meldet `pg_stat_subscription.received_lsn`, wenn du den Abonnenten
-  anhältst, und wie schnell holt er nach dem `ENABLE` auf?

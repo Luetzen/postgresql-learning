@@ -264,18 +264,3 @@ will man `EXPLAIN` lesen können (Teil 5, Teil 16).
 DROP TABLE vactest;
 DROP TABLE vactest_full;
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `pg_total_relation_size` beider Tabellen: frisch angelegt, nach dem `UPDATE`,
-  nach `REPACK` bzw. `VACUUM FULL`
-- `pg_indexes_size` — was macht der Vorgang mit den Indizes?
-- `\dt+`: zeigt die Tabelle **vor** und **nach** dem `REPACK` dieselbe Größe wie
-  `pg_total_relation_size`? (Nein — warum nicht?)
-- `relfrozenxid` aus `pg_class` vor und nach dem Lauf, für **beide** Tabellen
-- Friert `REPACK` die Zeilen ein wie `VACUUM FULL`? (Diese Frage beantwortet die
-  `REPACK`-Doku nicht — selbst nachsehen und hier festhalten)
-- Meldet `pg_stat_progress_repack` bei einem `REPACK (CONCURRENTLY)` etwas?
-- Mit `SET enable_sort = off` vor einem `REPACK`: ändert sich, was passiert?

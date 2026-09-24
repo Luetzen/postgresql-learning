@@ -365,24 +365,3 @@ docker compose exec -T db psql -U kurs -d kurs -c "DROP TABLE IF EXISTS streamin
 
 Ein Slot, den niemand mehr benutzt, hält WAL **für immer** zurück und lässt
 `pg_wal` wachsen — deshalb gehört er ausdrücklich aufgeräumt.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `SHOW wal_level;`, `SHOW max_wal_senders;`, `SHOW hot_standby;` auf dieser
-  Installation — was steht dort?
-- Erste Log-Zeile des Streamens auf der Standby: welches Segment, welcher
-  Sender?
-- `state` und `sync_state` in `pg_stat_replication` im Normalbetrieb
-- Wie weit laufen `sent_lsn` und `replay_lsn` in Sekunden auseinander (bei
-  Ruhe und unter Last)?
-- Was passiert mit `replay_lag` in `pg_stat_replication`, solange
-  `pg_wal_replay_pause()` aktiv ist?
-- `application_name` der Standby in `pg_stat_replication` gegen den Eintrag in
-  `synchronous_standby_names` — stimmen sie überein?
-- Mit `synchronous_standby_names` gesetzt: wie lange dauert ein `COMMIT` dann?
-- Das Log der Standby, wenn du bewusst einen falschen `primary_conninfo` /
-  Port einträgst — steht dort, was schiefging?
-- Was steht in `pg_stat_wal_receiver.slot_name`, und was macht `pg_wal` auf der
-  Primary, wenn du den Slot bei laufender Standby löschst?

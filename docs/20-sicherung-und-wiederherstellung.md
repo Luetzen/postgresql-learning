@@ -681,25 +681,3 @@ docker compose restart db
 
 `ALTER SYSTEM RESET ALL` nimmt alles auf einmal zurück — vorsichtiger Umgang gilt
 hier wie in 14.2, es gibt keinen Papierkorb.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Größe von `pg_database_size('kurs')` gegen die Größe des Dumps
-  (`ls -l .../kurs.dump`) — wie viel kleiner ist die logische Sicherung?
-- Dauer von `pg_dump -Fc` und von `pg_basebackup`, und die Größe von `base`
-- Ausgabe von `pg_verifybackup` — meldet es etwas, wenn eine Datei in `base`
-  absichtlich verändert wird? (Ausprobieren!)
-- `pg_stat_archiver` vor und nach `pg_switch_wal()`: welche Zähler bewegen sich?
-- Was passiert, wenn `archive_command` absichtlich `exit 1` zurückgibt — wächst
-  `pg_wal`? Was steht in `last_failed_wal`?
-- Die Log-Zeilen der Wiederherstellung: Zeile mit dem Beginn des Nachspielens,
-  Zeile mit „recovery stopping", erreichte LSN
-- `pg_is_in_recovery()` und `pg_last_xact_replay_timestamp()` auf der zweiten
-  Instanz, vor und nach `pg_wal_replay_resume()`
-- Was zeigt `pg_controldata` in `base` gegen `pg_controldata` in `restore`?
-- `recovery_target_time` statt `recovery_target_name`: landest du an derselben
-  Stelle? Und was ändert `recovery_target_inclusive = off`?
-- Kommt die wiederhergestellte Tabelle im Original mit `pg_dump -t` wieder an —
-  und was fehlt, wenn du nur `--section=data` nimmst?

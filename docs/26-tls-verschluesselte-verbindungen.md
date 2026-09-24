@@ -453,23 +453,3 @@ dieser Umgebung wirklich eingestellt ist, ist eine Abfrage, keine Annahme:
 docker compose exec -T db psql -U kurs -d kurs -c "SHOW ssl;"
 docker compose exec -T db psql -U kurs -d kurs -c "SHOW ssl_cert_file;"
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `SHOW ssl;` und `SHOW ssl_cert_file;` auf **deiner** Installation: wie heißen die
-  Dateien bei dir, und liegt der Schlüssel dort, wo der Server ihn erwartet?
-- Der `openssl`-Aufruf aus 26.2 mit **deinem** `CN` — was steht im Zertifikat unter
-  `Subject:` und `Subject Alternative Name`, wenn du `-text` liest?
-- `ls -l` auf `server.key`: welche Rechte stehen dort, und was passiert, wenn du sie
-  absichtlich auf `0644` setzt (Server **starten**, nicht reloaden)?
-- `\conninfo` derselben Rolle über den Socket und über TCP — in welchem Fall fehlt
-  die TLS-Zeile?
-- `pg_stat_ssl`: welche `version` und welche `cipher` stehen bei deiner Verbindung —
-  und ist `client_dn` leer? Warum (oder warum nicht)?
-- Was passiert mit `sslmode=verify-full`, wenn du das `CN` im Zertifikat absichtlich
-  nicht zum Namen in `-h` passend machst? Notiere die Meldung **wörtlich**.
-- Was steht im Log, wenn eine `hostssl`-Zeile passt und der Client ohne TLS kommt?
-- `SHOW ssl;` vor und nach einem `pg_reload_conf()` — reicht der Reload bei dir,
-  oder meldet `pending_restart` etwas?

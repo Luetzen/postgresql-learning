@@ -498,26 +498,3 @@ Docker-Host, und die Adresse, die in den Zeilen steht, hängt davon ab, wie Dock
 den Verkehr weiterleitet. Vergleiche die Ausgabe von `client_addr` aus 25.5 im
 Container mit den Adressen in den `host`-Zeilen — dann siehst du, welche Adresse
 dort ankommt.
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- `SHOW listen_addresses;` und `SHOW port;` — welche Werte gelten bei dir, und was
-  sagt `context`? Steht bei dir noch die Vorgabe `localhost`?
-- Die Zeile aus `ss -ltn`, die auf deinen Port passt: welche Adresse steht vor dem
-  Doppelpunkt — `127.0.0.1`, `0.0.0.0` oder `*`?
-- `pending_restart` für `listen_addresses`, **bevor** und **nach** einem Neustart.
-- Was `pg_isready` gegen den Server sagt — und was gegen eine Adresse, auf der
-  nichts läuft (zum Vergleich).
-- Die Meldung im **Server**-Log beim ersten Anmeldeversuch von außen: steht dort
-  die Adresse des Clients, wie du sie erwartet hast?
-- `client_addr` in `pg_stat_activity` für eine Socket-Verbindung und für eine
-  Verbindung über das Netz — was steht im ersten Fall in der Spalte?
-- Dieselbe Rolle einmal über `127.0.0.1` und einmal über die LAN-Adresse verbinden
-  (25.3a): in welchem der beiden Fälle wird ein Passwort verlangt, und welche Zeile
-  hat jeweils gepasst?
-- Verbindung auf Port 5433 (Standby): Was sagt `pg_is_in_recovery()`, und was
-  passiert beim Schreiben?
-- Nach dem Aufräumen: steht `listen_addresses` wieder auf der Vorgabe, und ist die
-  Testzeile in der `pg_hba.conf` wirklich weg?

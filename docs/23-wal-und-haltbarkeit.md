@@ -506,25 +506,3 @@ WHERE name IN ('wal_level', 'fsync', 'synchronous_commit', 'wal_sync_method',
                'full_page_writes', 'wal_log_hints', 'wal_compression')
 ORDER BY name;
 ```
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Ausgabe der `pg_settings`-Abfrage aus 23.9 auf **deiner** Installation: welche
-  `context`-Werte stehen dort, und bei welchen ist `pending_restart`
-  voreingestellt?
-- `SHOW wal_sync_method;` — welcher Wert, und ist das die Vorgabe deiner
-  Plattform?
-- `SHOW synchronous_commit;` — steht dort `on`, und was sagt `source`?
-- Dauer eines `INSERT`-Blocks mit `synchronous_commit = on` gegen `off`
-  (Versuch 1)
-- `wal_fpi`-Differenz aus Versuch 2: viele Zeilen gegen eine Zeile
-- `wal_bytes`-Differenz mit und ohne `wal_compression`, und ob sich `wal_fpi`
-  dabei überhaupt ändert
-- Was steht im Bild deiner Konfigurationsdatei an genau diesen sieben Zeilen —
-  welche davon sind bei dir auskommentiert, welche nicht?
-- Was passiert in `pg_stat_wal`, wenn du direkt nach einem `CHECKPOINT` eine
-  einzige Zeile änderst?
-- Bringt ein `pg_reload_conf()` nach `ALTER SYSTEM SET wal_level = 'logical'`
-  etwas? Was steht danach in `pending_restart`?

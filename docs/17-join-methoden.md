@@ -410,22 +410,3 @@ Bewusst offengelassen, kommt nach und nach dazu:
 - **`Hash Cond` gegen `Join Filter`** — warum ein Prädikat im Plan wandert.
 
 Referenz: https://www.postgresql.org/docs/18/planner-optimizer.html
-
----
-
-## Was in `06-kurs-notizen.md` gehört
-
-- Welche Methode hat der Planer in 17.6a gewählt — und welche Seite war der
-  `Hash`-Knoten?
-- Der erzwungene `Nested Loop` in 17.6a: wie viele `loops` hatte der innere
-  Knoten, und wie viel Zeit ergibt `actual time` × `loops`?
-- Hat sich die Methode geändert, nachdem `CREATE INDEX` + `ANALYZE` gelaufen sind?
-- `Batches` in 17.6b mit dem Vorgabe-`work_mem` gegen 64 MB: wo bleibt der
-  Unterschied — in den Zeiten oder nur in den temporären Blöcken?
-- `Merge Join` erzwungen: standen `Sort`-Knoten im Plan, obwohl der Index auf
-  `kurs_id` existierte — vorher und nachher?
-- Wie viele Zeilen standen in 17.6c hinter `Rows Removed by Join Filter`?
-- Beim Drei-Tabellen-Join in 17.6d: welcher Join-Knoten saß unter welchem, welche
-  Methode hatte jeder — und hat der Planer die `FROM`-Reihenfolge getauscht?
-- Sind mit allen drei Methoden verboten trotzdem Pläne herausgekommen — und zu
-  welchem `cost`?

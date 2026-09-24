@@ -294,22 +294,6 @@ er den Speicher ansetzt.
 
 ---
 
-## 19.6 Fragen an dich selbst
-
-- Warum schätzt der Planer `stadt = 1` allein richtig und `stadt = 1 AND plz =
-  100` um Faktor 100 falsch, obwohl beide Spalten eine einwandfreie Statistik
-  haben?
-- Warum ändert `CREATE STATISTICS` den `cost`, aber oft nicht den Plan?
-- Deine Daten sind durch Division entstanden. Was wäre, wenn in `plz` und
-  `stadt` unabhängige Zufallszahlen stünden (18.2) — wäre die Multiplikation dann
-  richtig?
-- Warum sind es drei Prozesse und nicht zwei? Welche Einstellung entscheidet
-  das, und wie viele Zahlen würdest du im Knoten erwarten, wenn sie aus wäre?
-- In welchem Fall wird aus dieser Schätzung ein wirklich schlechter Plan? Baue
-  ihn mit einer zweiten Tabelle und einem `Nested Loop` (Teil 17).
-
----
-
 ## Doku dazu
 
 - [`EXPLAIN` und seine Optionen](https://www.postgresql.org/docs/18/sql-explain.html)

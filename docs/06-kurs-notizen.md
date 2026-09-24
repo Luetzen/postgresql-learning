@@ -52,23 +52,6 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 23: 500 Zeilen mit `synchronous_commit = on` gegen `off` messen (Versuch 1) und beide Zeiten eintragen
 - [ ] Teil 23: `wal_fpi` nach `CHECKPOINT` vor/nach einem `UPDATE` vergleichen — einmal über viele Zeilen, einmal über eine (Versuch 2)
 - [ ] Teil 23: `wal_compression` setzen (Wert aus `pg_settings.enumvals`) und `wal_bytes` gegen den unkomprimierten Fall messen (Versuch 3)
-- [ ] Teil 24 durchspielen: Rolle `sepp` anlegen, mit `SET ROLE` die Fehlermeldungen einsammeln, `GRANT`-Ebene für Ebene nachziehen
-- [ ] Teil 24: die erste `local`-Zeile der eigenen `pg_hba.conf` prüfen — kommt `sepp` mit oder ohne Passwort hinein?
-- [ ] Teil 24: `\drg` gegen `\drds` gegen `pg_auth_members` stellen — welcher Befehl zeigt welche Zeile?
-- [ ] Teil 24: `\du` gegen `\du+` gegen `pg_roles` stellen — welche Spalte steht nur in einer von beiden?
-- [ ] Teil 24: `CONNECTION LIMIT 2` setzen und die dritte Verbindung provozieren — Log oder Client?
-- [ ] Teil 24: eine Rolle mit Objekten besitzen lassen und `DROP ROLE` scheitern sehen, dann `DROP OWNED` / `REASSIGN OWNED` vergleichen
-- [ ] Teil 25 durchspielen: `listen_addresses` gegen `ss -ltn` stellen, `pg_isready` von außen — was sagt es bei geschlossenem und bei offenem Tor 2?
-- [ ] Teil 25: die `pg_hba.conf`-Zeile für den fremden Host anlegen und im **Server**-Log nachsehen, was beim ersten Versuch steht
-- [ ] Teil 25: `client_addr` in `pg_stat_activity` bei Socket gegen Netz vergleichen — und was steht bei einem `trust`-Eintrag im Log?
-- [ ] Teil 25: dieselbe Rolle über `127.0.0.1` und über die LAN-Adresse verbinden (25.3a) — wann wird das Passwort verlangt, und welche `hba`-Zeile hat jeweils gegriffen?
-- [ ] Teil 25: über Port 5433 (Standby) verbinden und `pg_is_in_recovery()` gegen den Schreibversuch stellen
-- [ ] Teil 25: nach dem Aufräumen prüfen, ob `listen_addresses` wieder die Vorgabe ist und die Testzeile wirklich weg ist
-- [ ] Teil 26 durchspielen: Zertifikat erzeugen, `ssl = on`, Reload — was steht in `\conninfo` und in `pg_stat_ssl`?
-- [ ] Teil 26: `server.key` absichtlich auf `0644` setzen und den Server **starten** (nicht reloaden) — was steht im Log?
-- [ ] Teil 26: `sslmode=verify-full` mit einem `CN` probieren, das nicht zum Namen in `-h` passt — Meldung wörtlich notieren
-- [ ] Teil 26: `hostssl`-Zeile anlegen und mit `sslmode=disable` verbinden — was steht im Log, und wo steht es **nicht**?
-- [ ] Teil 26: dieselbe Rolle über Socket und über TCP verbinden — in welchem Fall fehlt die TLS-Zeile in `\conninfo`?
 
 ---
 

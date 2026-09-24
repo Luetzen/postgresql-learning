@@ -60,6 +60,7 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 25 durchspielen: `listen_addresses` gegen `ss -ltn` stellen, `pg_isready` von außen — was sagt es bei geschlossenem und bei offenem Tor 2?
 - [ ] Teil 25: die `pg_hba.conf`-Zeile für den fremden Host anlegen und im **Server**-Log nachsehen, was beim ersten Versuch steht
 - [ ] Teil 25: `client_addr` in `pg_stat_activity` bei Socket gegen Netz vergleichen — und was steht bei einem `trust`-Eintrag im Log?
+- [ ] Teil 25: dieselbe Rolle über `127.0.0.1` und über die LAN-Adresse verbinden (25.3a) — wann wird das Passwort verlangt, und welche `hba`-Zeile hat jeweils gegriffen?
 - [ ] Teil 25: über Port 5433 (Standby) verbinden und `pg_is_in_recovery()` gegen den Schreibversuch stellen
 - [ ] Teil 25: nach dem Aufräumen prüfen, ob `listen_addresses` wieder die Vorgabe ist und die Testzeile wirklich weg ist
 

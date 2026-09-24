@@ -210,7 +210,7 @@ Vier Entscheidungen stecken darin, und jede ist eine eigene Frage:
 | `TYPE` | `host` = TCP (mit **oder** ohne SSL), `hostssl` = **nur** mit SSL, `hostnossl` = nur ohne |
 | `DATABASE` | `kurs` (eine), `all`, oder eine Liste; `replication` ist eine eigene Zeilenart (24.9) |
 | `USER` | die Rolle — `sepp`, `all`, oder `+accounting` (Mitglieder einer Rolle, 24.5) |
-| `ADDRESS` | **wer** es versuchen darf: ein `/32` = genau diese Adresse, ein `/24` = das ganze Netz |
+| `ADDRESS` | **wer** es versuchen darf: `/32` = genau diese Adresse, `/24` = das ganze Netz, `0.0.0.0/0` = **jede** IPv4-Adresse (`::/0` entsprechend IPv6) |
 | `METHOD` | was geprüft wird: `scram-sha-256`, `md5`, `trust`, `reject` … (24.4) |
 
 Der Unterschied `/32` gegen `/24` ist keine Formalität: `/24` lässt *jeden* Rechner
@@ -229,6 +229,69 @@ genommen nur für den Fall, dass ein Fehler beim Lesen gemeldet werden soll (dan
 steht er im Log). Wenn du unsicher bist, ob die Datei überhaupt gelesen wird: bau
 absichtlich einen Syntaxfehler ein, reload, und schau ins Log. Genau so lernt man,
 wo das Log steht.
+
+---
+
+## 25.3a Warum die Reihenfolge alles entscheidet
+
+Der Satz aus 25.3 — „die erste passende Zeile gewinnt" — klingt harmlos, bis er
+zuschlägt. Ein Fall, der fast jeden einmal erwischt: man legt für einen fremden
+Client eine Zeile mit Passwort an, prüft sie — und kommt **ohne** Passwort hinein.
+Denn die Zeile war nie dran.
+
+Eine Standarddatei aus `initdb` sieht so aus (gekürzt):
+
+```ini
+# TYPE   DATABASE  USER  ADDRESS       METHOD
+local    all       all                 trust
+host     all       all   127.0.0.1/32  trust
+host     all       all   ::1/128       trust
+host     kurs      sepp  0.0.0.0/0     scram-sha-256
+```
+
+Und jetzt der Denkfehler, um den es geht: **TCP ist nicht dasselbe wie „von
+außen".** `-h 127.0.0.1` oder `-h localhost` sind TCP — aber die Quelladresse ist
+Loopback, und die Zeile mit `127.0.0.1/32` steht **weiter oben**. Was eine
+Verbindung erwischt, ist deshalb keine Frage des Protokolls, sondern der Adresse:
+
+| Quelladresse der Verbindung | erste passende Zeile | Methode |
+|-----------------------------|----------------------|---------|
+| Unix-Socket (kein `-h`, oder `-h /var/run/postgresql`) | `local all all` | `trust` |
+| `127.0.0.1` über TCP | `host all all 127.0.0.1/32` | `trust` |
+| `::1` über TCP | `host all all ::1/128` | `trust` |
+| eine LAN-Adresse | `host kurs sepp 0.0.0.0/0` | `scram-sha-256` |
+
+Die eigene Zeile ist also **nur in der letzten Zeile dieser Tabelle im Spiel**. Für
+alles, was von derselben Maschine kommt, ist sie toter Code — nicht weil sie falsch
+wäre, sondern weil vorher schon etwas passt.
+
+Drei Regeln, die man daraus mitnimmt:
+
+- **Eine Zeile passt nur, wenn alle vier Spalten passen** — Typ, Datenbank,
+  Benutzer *und* Adresse. Man kann die Datei deshalb nicht „nach Gefühl" lesen,
+  sondern muss für eine konkrete Verbindung alle vier prüfen.
+- **Die weiteste Regel ist die gefährlichste, nicht die stärkste.** `0.0.0.0/0`
+  heißt „jede IPv4-Adresse": sie gehört ganz nach unten, und sie beschützt
+  nichts, was weiter oben schon per `trust` durchgewinkt wird.
+- **Wer prüfen will, muss die Quelle ändern, nicht das Protokoll.** Ein Test von
+  derselben Maschine über `127.0.0.1` zeigt die neue Zeile nie.
+
+Der Test, der es beweist: dieselbe Rolle einmal über Loopback und einmal über die
+eigene LAN-Adresse verbinden — und **nachsehen**, welche Adresse angekommen ist:
+
+```bash
+psql -h 127.0.0.1 -p 5432 -U sepp -d kurs      # erwartet: kein Passwort (die trust-Zeile oben)
+psql -h <LAN-Adresse> -p 5432 -U sepp -d kurs  # erwartet: Passwort (die eigene Zeile)
+```
+
+```sql
+SELECT usename, client_addr FROM pg_stat_activity WHERE usename = 'sepp';
+```
+
+Steht in `client_addr` wieder `127.0.0.1`, hast du den Fall nicht getestet, sondern
+wiederholt. Und wenn du sehen willst, **wie** der Server die Zeilen abarbeitet,
+statt es zu vermuten: `log_connections` einschalten (`runtime-config-logging.html`,
+oben verlinkt) und ins Log schauen — dort steht die Verbindung mit ihrer Adresse.
 
 ---
 
@@ -340,6 +403,7 @@ Socket-Verbindung.** Leer heißt hier nicht „kein Client", sondern „kein Net
 | dieselbe Meldung mit „no encryption" | es passt nur eine `hostssl`-Zeile, der Client kam ohne SSL | `sslmode` auf der Client-Seite, 25.4 |
 | `password authentication failed` | Zeile passt, Passwort falsch — oder gar keins gesetzt | `ALTER ROLE … PASSWORD`, `password_encryption` (24.4) |
 | Passwort wird nie abgefragt | weiter oben steht eine `trust`-Zeile, die schon passt | dieselbe Datei, Reihenfolge |
+| verlangt **kein** Passwort, obwohl TCP und eine neue `scram`-Zeile | die Verbindung kam von Loopback (oder über den Socket) — die `127.0.0.1/32`-Zeile steht weiter oben und passt zuerst | `client_addr` in `pg_stat_activity`, 25.3a |
 | „role … does not exist" beim Anmelden | die Rolle gibt es auf **dieser** Instanz nicht (zwei Instanzen!) | `\du` **auf dem Ziel**, `pg_is_in_recovery()` |
 | verbinden klappt, lesen nicht | **Tor 4**: `GRANT` fehlt | Teil 24.3 |
 | verbinden klappt, **schreiben** nicht | du bist auf der Standby (21.4) — oder es fehlt `INSERT` | `pg_is_in_recovery()`, `\dp` |
@@ -435,6 +499,9 @@ dort ankommt.
   die Adresse des Clients, wie du sie erwartet hast?
 - `client_addr` in `pg_stat_activity` für eine Socket-Verbindung und für eine
   Verbindung über das Netz — was steht im ersten Fall in der Spalte?
+- Dieselbe Rolle einmal über `127.0.0.1` und einmal über die LAN-Adresse verbinden
+  (25.3a): in welchem der beiden Fälle wird ein Passwort verlangt, und welche Zeile
+  hat jeweils gepasst?
 - Verbindung auf Port 5433 (Standby): Was sagt `pg_is_in_recovery()`, und was
   passiert beim Schreiben?
 - Nach dem Aufräumen: steht `listen_addresses` wieder auf der Vorgabe, und ist die

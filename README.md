@@ -549,6 +549,10 @@ host     kurs      sepp  10.0.0.5/32   scram-sha-256
 SELECT pg_reload_conf();      -- hier reicht der Reload, kein Neustart
 ```
 
+Achtung, die häufigste Falle: die Zeile wirkt nur für Adressen, die nicht schon von
+oben erwischt werden. `-h 127.0.0.1`, `-h localhost` und der Socket sind **nicht**
+„von außen" — dort gilt weiter die `trust`-Zeile (25.3a).
+
 Vom Client aus, und die Gegenprobe, wie die Sitzung angekommen ist:
 
 ```bash

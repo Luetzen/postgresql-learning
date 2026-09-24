@@ -63,6 +63,7 @@ docker compose version
 | 20 | [docs/20-sicherung-und-wiederherstellung.md](docs/20-sicherung-und-wiederherstellung.md) | `pg_dump`/`pg_restore` für einzelne Objekte, `pg_basebackup`, WAL-Archiv, PITR mit `recovery_target*` |
 | 21 | [docs/21-streaming-replikation.md](docs/21-streaming-replikation.md) | Standby aufsetzen (`pg_basebackup -R`), `pg_stat_replication`, `pg_stat_wal_receiver`, synchron/asynchron, `pg_promote` |
 | 22 | [docs/22-logische-replikation.md](docs/22-logische-replikation.md) | `wal_level = logical`, Publication/Subscription, `REPLICA IDENTITY`, `test_decoding`, `pg_stat_subscription` |
+| 23 | [docs/23-wal-und-haltbarkeit.md](docs/23-wal-und-haltbarkeit.md) | Der `# WRITE-AHEAD LOG`-Block: `wal_level`, `fsync`, `synchronous_commit`, `wal_sync_method`, `full_page_writes`, `wal_log_hints`, `wal_compression` |
 
 ---
 
@@ -408,6 +409,53 @@ SELECT subname, received_lsn, last_msg_receipt_time FROM pg_stat_subscription;
 ```
 
 Alle Einzelheiten: [docs/22-logische-replikation.md](docs/22-logische-replikation.md)
+
+---
+
+## Schnellstart (Teil 23 — Der WAL-Block)
+
+Voraussetzung: die Tabelle `konto` aus Teil 7 — in die Beispiele unten wird
+geschrieben:
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/04_konto.sql
+```
+
+Zuerst lesen, was auf **diesem** Server gilt — `context` sagt, ob eine Änderung
+Neustart, Reload oder nur eine Sitzung braucht:
+
+```sql
+SELECT name, setting, unit, context, vartype, source, pending_restart
+FROM pg_settings
+WHERE name IN ('wal_level', 'fsync', 'synchronous_commit', 'wal_sync_method',
+               'full_page_writes', 'wal_log_hints', 'wal_compression')
+ORDER BY name;
+```
+
+Dann der Vergleich, den man messen muss: 500 Zeilen mit und ohne Warten auf die
+Platte (`\timing on` vorher):
+
+```sql
+INSERT INTO konto (id, betrag) SELECT 9000 + g, g FROM generate_series(1, 500) AS g;
+
+SET synchronous_commit = off;
+INSERT INTO konto (id, betrag) SELECT 9500 + g, g FROM generate_series(1, 500) AS g;
+RESET synchronous_commit;
+```
+
+Und die Rechnung für `full_page_writes` — ein Checkpoint setzt den Ausgangspunkt,
+ab dem ganze Seiten mitgeloggt werden:
+
+```sql
+CHECKPOINT;
+SELECT wal_fpi, wal_bytes FROM pg_stat_wal;      -- vorher notieren
+UPDATE konto SET betrag = betrag + 1;
+SELECT pg_switch_wal();
+SELECT wal_fpi, wal_bytes FROM pg_stat_wal;      -- nachher vergleichen
+```
+
+Alle sieben Schalter, ihre Vorgaben und das Aufräumen:
+[docs/23-wal-und-haltbarkeit.md](docs/23-wal-und-haltbarkeit.md)
 
 ---
 

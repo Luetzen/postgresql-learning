@@ -24,6 +24,7 @@ Bereits als eigenes Dokument angelegt:
 - [20 — Wiederherstellung: ganzer Server, ein Zeitpunkt, einzelne Objekte](20-sicherung-und-wiederherstellung.md)
 - [21 — Streaming-Replikation: Primary, Standby, WAL sender](21-streaming-replikation.md)
 - [22 — Logische Replikation: Publication, Subscription, Logical Decoding](22-logische-replikation.md)
+- [23 — WAL und Haltbarkeit: die Schalter aus dem `# WRITE-AHEAD LOG`-Block](23-wal-und-haltbarkeit.md)
 
 ---
 
@@ -44,6 +45,10 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 22 durchspielen: `wal_level = logical`, zweite Datenbank `kurs_abo`, Publication/Subscription aufsetzen
 - [ ] Teil 22: `UPDATE`/`DELETE` ohne Replica Identity provozieren und die Meldung auf der Quelle finden
 - [ ] Teil 22: `pg_logical_slot_peek_changes` gegen `pg_logical_slot_get_changes` vergleichen
+- [ ] Teil 23 durchspielen: den WAL-Block mit der `pg_settings`-Abfrage aus 23.9 überblicken, `context` und `pending_restart` notieren
+- [ ] Teil 23: 500 Zeilen mit `synchronous_commit = on` gegen `off` messen (Versuch 1) und beide Zeiten eintragen
+- [ ] Teil 23: `wal_fpi` nach `CHECKPOINT` vor/nach einem `UPDATE` vergleichen — einmal über viele Zeilen, einmal über eine (Versuch 2)
+- [ ] Teil 23: `wal_compression` setzen (Wert aus `pg_settings.enumvals`) und `wal_bytes` gegen den unkomprimierten Fall messen (Versuch 3)
 
 ---
 
@@ -326,6 +331,27 @@ Ort: eigener Rechner · Datum: ____________________
 | Erscheint ein `COMMIT` mit mehreren Änderungen als eine Gruppe im `test_decoding`-Ausgang? | |
 | Steht in `pg_stat_replication` etwas, wenn nur logisch repliziert wird? | |
 | Was passiert mit den Zeilen im Ziel, wenn du auf der Quelle `TRUNCATE` machst? | |
+
+### WAL-Schalter und Haltbarkeit (`fsync`, `synchronous_commit`, …)
+
+| Messung | Wert |
+|---------|------|
+| `wal_level` / `fsync` / `synchronous_commit` / `wal_sync_method` (`SHOW …`) | |
+| `context` und `pending_restart` der sieben Einstellungen aus 23.9 | |
+| `enumvals` von `wal_compression` auf dieser Installation | |
+| Dauer eines `INSERT` mit `synchronous_commit = on` / `= off` (Versuch 1) | |
+| `wal_fpi`-Differenz nach `CHECKPOINT` — viele Zeilen geändert | |
+| dieselbe Messung mit nur einer geänderten Zeile | |
+| `wal_bytes`-Differenz mit / ohne `wal_compression` (Versuch 3) | |
+| `pending_restart` nach `ALTER SYSTEM SET wal_level = 'logical'` | |
+
+| Frage | eigene Beobachtung |
+|-------|--------------------|
+| Wirkt ein `pg_reload_conf()` nach `ALTER SYSTEM SET wal_level = …`? | |
+| Ändert `wal_compression` die Zahl in `wal_fpi` oder nur die in `wal_bytes`? | |
+| Warum fällt die `wal_fpi`-Differenz kleiner aus, wenn nur eine Zeile geändert wird? | |
+| Steht in `source` bei den sieben Werten `default` oder `configuration file`? | |
+| Was steht in deiner eigenen `postgresql.conf` an diesen sieben Zeilen — welche sind auskommentiert? | |
 
 ---
 

@@ -25,6 +25,8 @@ Bereits als eigenes Dokument angelegt:
 - [21 — Streaming-Replikation: Primary, Standby, WAL sender](21-streaming-replikation.md)
 - [22 — Logische Replikation: Publication, Subscription, Logical Decoding](22-logische-replikation.md)
 - [23 — WAL und Haltbarkeit: die Schalter aus dem `# WRITE-AHEAD LOG`-Block](23-wal-und-haltbarkeit.md)
+- [24 — Rollen und Rechte: wer darf was](24-rollen-und-rechte.md)
+- [25 — Verbindungen von außen: `listen_addresses`, Port, `pg_hba.conf`](25-verbindungen-von-aussen.md)
 
 ---
 
@@ -49,6 +51,17 @@ Bereits als eigenes Dokument angelegt:
 - [ ] Teil 23: 500 Zeilen mit `synchronous_commit = on` gegen `off` messen (Versuch 1) und beide Zeiten eintragen
 - [ ] Teil 23: `wal_fpi` nach `CHECKPOINT` vor/nach einem `UPDATE` vergleichen — einmal über viele Zeilen, einmal über eine (Versuch 2)
 - [ ] Teil 23: `wal_compression` setzen (Wert aus `pg_settings.enumvals`) und `wal_bytes` gegen den unkomprimierten Fall messen (Versuch 3)
+- [ ] Teil 24 durchspielen: Rolle `sepp` anlegen, mit `SET ROLE` die Fehlermeldungen einsammeln, `GRANT`-Ebene für Ebene nachziehen
+- [ ] Teil 24: die erste `local`-Zeile der eigenen `pg_hba.conf` prüfen — kommt `sepp` mit oder ohne Passwort hinein?
+- [ ] Teil 24: `\drg` gegen `\drds` gegen `pg_auth_members` stellen — welcher Befehl zeigt welche Zeile?
+- [ ] Teil 24: `\du` gegen `\du+` gegen `pg_roles` stellen — welche Spalte steht nur in einer von beiden?
+- [ ] Teil 24: `CONNECTION LIMIT 2` setzen und die dritte Verbindung provozieren — Log oder Client?
+- [ ] Teil 24: eine Rolle mit Objekten besitzen lassen und `DROP ROLE` scheitern sehen, dann `DROP OWNED` / `REASSIGN OWNED` vergleichen
+- [ ] Teil 25 durchspielen: `listen_addresses` gegen `ss -ltn` stellen, `pg_isready` von außen — was sagt es bei geschlossenem und bei offenem Tor 2?
+- [ ] Teil 25: die `pg_hba.conf`-Zeile für den fremden Host anlegen und im **Server**-Log nachsehen, was beim ersten Versuch steht
+- [ ] Teil 25: `client_addr` in `pg_stat_activity` bei Socket gegen Netz vergleichen — und was steht bei einem `trust`-Eintrag im Log?
+- [ ] Teil 25: über Port 5433 (Standby) verbinden und `pg_is_in_recovery()` gegen den Schreibversuch stellen
+- [ ] Teil 25: nach dem Aufräumen prüfen, ob `listen_addresses` wieder die Vorgabe ist und die Testzeile wirklich weg ist
 
 ---
 

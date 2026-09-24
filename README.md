@@ -64,6 +64,8 @@ docker compose version
 | 21 | [docs/21-streaming-replikation.md](docs/21-streaming-replikation.md) | Standby aufsetzen (`pg_basebackup -R`), `pg_stat_replication`, `pg_stat_wal_receiver`, synchron/asynchron, `pg_promote` |
 | 22 | [docs/22-logische-replikation.md](docs/22-logische-replikation.md) | `wal_level = logical`, Publication/Subscription, `REPLICA IDENTITY`, `test_decoding`, `pg_stat_subscription` |
 | 23 | [docs/23-wal-und-haltbarkeit.md](docs/23-wal-und-haltbarkeit.md) | Der `# WRITE-AHEAD LOG`-Block: `wal_level`, `fsync`, `synchronous_commit`, `wal_sync_method`, `full_page_writes`, `wal_log_hints`, `wal_compression` |
+| 24 | [docs/24-rollen-und-rechte.md](docs/24-rollen-und-rechte.md) | `CREATE ROLE`/`CREATE USER`, die Rollenattribute, `GRANT`/`REVOKE`, `pg_hba.conf`, Mitgliedschaft und `SET ROLE`, vordefinierte Rollen |
+| 25 | [docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md) | `listen_addresses`, Port, `pg_hba.conf` für fremde Hosts, `pg_isready`, `\conninfo`, `client_addr` |
 
 ---
 
@@ -456,6 +458,110 @@ SELECT wal_fpi, wal_bytes FROM pg_stat_wal;      -- nachher vergleichen
 
 Alle sieben Schalter, ihre Vorgaben und das Aufräumen:
 [docs/23-wal-und-haltbarkeit.md](docs/23-wal-und-haltbarkeit.md)
+
+---
+
+## Schnellstart (Teil 24 — Rollen und Rechte)
+
+Voraussetzung: die Tabelle `konto` aus Teil 7 (wie im vorigen Abschnitt):
+
+```bash
+docker compose exec -T db psql -U kurs -d kurs -f /sql/04_konto.sql
+```
+
+Wer bist du, und was darfst du? Erst nachsehen, nichts ändern:
+
+```sql
+\du+                                    -- Rollen mit Attributen und Mitgliedschaften
+\h CREATE ROLE                          -- was an einer Rolle einstellbar ist
+SELECT current_user, session_user;
+```
+
+Dann eine Rolle anlegen und mit `SET ROLE` die Welt aus ihrer Sicht ansehen — jedes
+fehlende Recht hat eine eigene Meldung:
+
+```sql
+CREATE ROLE sepp LOGIN PASSWORD 'geheim';
+SET ROLE sepp;
+SELECT count(*) FROM konto;             -- permission denied for table konto
+RESET ROLE;
+
+GRANT CONNECT ON DATABASE kurs TO sepp;
+GRANT USAGE   ON SCHEMA  public TO sepp;
+GRANT SELECT  ON TABLE   konto  TO sepp;
+```
+
+Rechte lieber an eine Rolle ohne `LOGIN` hängen und Personen zu Mitgliedern machen:
+
+```sql
+CREATE ROLE accounting NOLOGIN;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO accounting;
+GRANT accounting TO sepp;
+\dp konto
+\drg                                   -- wer ist Mitglied von was, mit welchen Optionen
+```
+
+Und was der Server von Haus aus erlaubt, sieht man an der `pg_hba.conf`, deren Pfad
+`SHOW hba_file;` nennt — dazu die Anmeldung selbst:
+
+```sql
+SHOW hba_file;
+SHOW password_encryption;
+\conninfo
+```
+
+Attribute, alle Rechte-Ebenen, vordefinierte Rollen und das Aufräumen (inklusive
+`DROP OWNED` / `REASSIGN OWNED`):
+[docs/24-rollen-und-rechte.md](docs/24-rollen-und-rechte.md)
+
+---
+
+## Schnellstart (Teil 25 — Verbindungen von außen)
+
+Zuerst ohne Netz, nur am Server — hört er überhaupt, und auf welcher Adresse?
+
+```sql
+SHOW listen_addresses;
+SHOW port;
+SELECT name, setting, context, source, pending_restart
+FROM pg_settings WHERE name IN ('listen_addresses', 'port') ORDER BY name;
+```
+
+```bash
+ss -ltn                       # 127.0.0.1:5432 oder *:5432?
+```
+
+Dann die Frage, ob man überhaupt bis zum Server kommt — **ohne** Anmeldung:
+
+```bash
+pg_isready -h kurs-00 -p 5432
+```
+
+Und erst danach die `pg_hba.conf`, deren Pfad `SHOW hba_file;` nennt: eine
+`host`-Zeile für den fremden Client, Reihenfolge von oben nach unten.
+
+```ini
+# TYPE   DATABASE  USER  ADDRESS       METHOD
+host     kurs      sepp  10.0.0.5/32   scram-sha-256
+```
+
+```sql
+SELECT pg_reload_conf();      -- hier reicht der Reload, kein Neustart
+```
+
+Vom Client aus, und die Gegenprobe, wie die Sitzung angekommen ist:
+
+```bash
+psql -h kurs-00 -p 5432 -U sepp -d kurs
+```
+
+```sql
+\conninfo
+SELECT current_user, inet_server_addr(), inet_server_port();
+```
+
+Die drei Tore, `pg_isready` als Suchwerkzeug und das Aufräumen:
+[docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md)
 
 ---
 

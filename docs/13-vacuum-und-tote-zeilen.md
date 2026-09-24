@@ -88,8 +88,7 @@ Cursor die Aufräumarbeit behindern kann — siehe 10.6 (g).
 ## 13.1b Die `VERBOSE`-Ausgabe lesen
 
 Das ist der einzige Ort, an dem man sieht, **was** `VACUUM` getan hat. Die Form ist
-immer dieselbe (hier mit `N` statt Zahlen — deine stehen in
-`06-kurs-notizen.md`):
+immer dieselbe (hier mit `N` statt Zahlen):
 
 ```text
 INFO:  vacuuming "kurs.public.konto"
@@ -341,7 +340,7 @@ Das ist die ganze Lektion in vier Zeilen: **`UPDATE kurs SET name = name;` ände
 nichts am Inhalt — und verdoppelt trotzdem die Tabelle.** Ein `VACUUM` macht den
 Platz wieder nutzbar, ein `VACUUM FULL` gibt ihn zurück.
 
-Dauer und Größen gehören in `06-kurs-notizen.md`, nicht hierher.
+Dauer und Größen hängen an deiner Maschine — deshalb stehen hier keine.
 
 ---
 

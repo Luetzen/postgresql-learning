@@ -491,8 +491,7 @@ WHERE pid = 1234
 ```
 
 `waitstart` steht auf `null`, solange die Sperre gehalten wird — und verrät beim
-Warten, seit wann. Das ist die Zahl, die man in `06-kurs-notizen.md` eintragen
-will.
+Warten, seit wann.
 
 Was `Lock` als Warteereignis überhaupt ist, welche anderen es gibt und was
 dahinter „page locks" stecken, steht in Teil 10.

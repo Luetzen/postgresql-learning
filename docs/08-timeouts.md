@@ -154,7 +154,7 @@ schnellen Anweisungen begrenzen. Dafür gibt es `transaction_timeout` (siehe 8.5
 Eine Frage zum Selbstprüfen, statt sie zu glauben: **zählt die Zeit mit, in der
 eine Anweisung auf eine Sperre wartet?** Die Situation aus 7.6 herstellen (Fenster
 A hält die Zeilensperre), in Fenster B `SET statement_timeout = '2s';` setzen und
-das `UPDATE` absetzen. Was passiert? In `06-kurs-notizen.md` notieren.
+das `UPDATE` absetzen. Was passiert?
 
 ---
 

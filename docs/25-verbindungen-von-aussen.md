@@ -415,6 +415,7 @@ Socket-Verbindung.** Leer heißt hier nicht „kein Client", sondern „kein Net
 | `connection refused`, obwohl `ss` `*:5432` zeigt | Firewall **lehnt ab** statt zu verwerfen — dieselbe Meldung, andere Ursache | Firewall-Regeln, `pg_isready` |
 | „no pg_hba.conf entry for host …, user …, database …" | keine passende Zeile für diese Adresse/diesen Benutzer | `SHOW hba_file;`, Datei **von oben nach unten** (25.3) |
 | dieselbe Meldung mit „no encryption" | es passt nur eine `hostssl`-Zeile, der Client kam ohne SSL | `sslmode` auf der Client-Seite, 25.4 |
+| dieselbe Meldung mit „**SSL encryption**“ | die Verbindung **war** verschlüsselt — es fehlt die Zeile für **diesen Benutzer** oder diese Adresse | Datei von oben nach unten, alle vier Spalten (25.3a) |
 | `password authentication failed` | Zeile passt, Passwort falsch — oder gar keins gesetzt | `ALTER ROLE … PASSWORD`, `password_encryption` (24.4) |
 | `FATAL: Peer authentication failed for user …` | die Zeile ist `peer`, aber der Betriebssystem-Benutzer heißt anders als die Rolle | das `DETAIL` im Log nennt Datei und Zeile, 25.3a und 25.4 |
 | Passwort wird nie abgefragt | weiter oben steht eine `trust`-Zeile, die schon passt | dieselbe Datei, Reihenfolge |
@@ -428,6 +429,11 @@ Socket-Verbindung.** Leer heißt hier nicht „kein Client", sondern „kein Net
 Der Merksatz über der Tabelle steht schon in 25.0: **sag `pg_isready` zuerst.**
 Seine Antwort sortiert die Tabelle in zwei Hälften — alles über der Zeile
 „no pg_hba.conf entry" ist Tor 1/2, alles darunter ist Tor 3 oder die Rechte.
+
+Dazu ein Detail, das die Meldung selbst liefert: **sie nennt den Zustand der
+Verbindung.** Steht dort `no encryption`, wurde gar kein TLS benutzt — dann ist es
+eine TLS-Frage (Teil 26). Steht dort `SSL encryption`, lief die Verschlüsselung,
+und es scheitert allein an der Zeile — also nicht am Zertifikat.
 
 ---
 

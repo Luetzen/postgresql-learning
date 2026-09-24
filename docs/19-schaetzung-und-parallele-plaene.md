@@ -294,22 +294,6 @@ er den Speicher ansetzt.
 
 ---
 
-## 19.5 Was hier gemessen gehört
-
-In [`06-kurs-notizen.md`](06-kurs-notizen.md) steht dafür eine eigene Tabelle.
-Die Fragen dazu:
-
-- `stadt = 1` allein gegen `stadt = 1 AND plz = 100`: geschätzte Zeilen und
-  Ausführungszeit — wie groß ist der Abstand jeweils?
-- Dasselbe noch einmal nach `CREATE STATISTICS … (dependencies)` — was ändert
-  sich an `rows`, was an `cost`, was an der Zeit?
-- `SELECT stadt, plz, count(*) … GROUP BY stadt, plz`: geschätzte gegen
-  tatsächliche Gruppenzahl, vor und nach `ndistinct`?
-- Mit `max_parallel_workers_per_gather = 0`: wie stark ändert sich die Zeit —
-  und wie stark streut sie über fünf Läufe?
-
----
-
 ## 19.6 Fragen an dich selbst
 
 - Warum schätzt der Planer `stadt = 1` allein richtig und `stadt = 1 AND plz =

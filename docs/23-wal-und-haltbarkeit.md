@@ -402,9 +402,8 @@ INSERT INTO konto (id, betrag) SELECT 9500 + g, g FROM generate_series(1, 500) A
 RESET synchronous_commit;
 ```
 
-Vergleiche die beiden Zeiten. **Trag beide in `06-kurs-notizen.md` ein** — wie
-groß der Unterschied ist, hängt an deiner Platte, nicht an PostgreSQL, und steht
-deshalb nirgends in diesem Dokument.
+Vergleiche die beiden Zeiten. Wie groß der Unterschied ist, hängt an deiner
+Platte, nicht an PostgreSQL — deshalb steht er nirgends in diesem Dokument.
 
 **Versuch 2 — wie viele ganze Seiten geschrieben werden.** Ein Checkpoint setzt
 den Ausgangspunkt, ab dem `full_page_writes` wieder zuschlägt:
@@ -442,8 +441,8 @@ braucht — dann:
 docker compose restart db
 ```
 
-Zusatzfrage für `06-kurs-notizen.md`: ändert sich `wal_fpi` durch die
-Kompression, oder nur `wal_bytes`? Die Antwort sagt, **was** komprimiert wird.
+Zusatzfrage: ändert sich `wal_fpi` durch die Kompression, oder nur `wal_bytes`?
+Die Antwort sagt, **was** komprimiert wird.
 
 ---
 

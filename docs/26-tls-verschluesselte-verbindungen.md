@@ -196,6 +196,83 @@ Die Client-Dateien werden in 26.7 gebraucht — und wie auf der Server-Seite gil
 
 ---
 
+## 26.3a Zertifikate hinterlegen: wohin, mit welchen Rechten
+
+Der `openssl`-Aufruf aus 26.2 legt die Dateien dort ab, wo man ihn ausführt. Dass
+das funktioniert, liegt daran, dass es **die Vorgabe** ist. Sobald sie woanders
+liegen, muss man es dem Server sagen — und bei den Rechten hört der
+Bequemlichkeitsweg auf.
+
+**1. Die Vorgabe: ins Datenverzeichnis.** `$PGDATA/server.crt` und
+`$PGDATA/server.key`. Nichts zu konfigurieren — deshalb genügt der Aufruf aus 26.2
+in diesem Verzeichnis.
+
+**2. Ein anderer Ort: `ssl_cert_file` und `ssl_key_file`.** Beide erwarten einen
+Pfad — absolut, damit die Deutung nicht vom Arbeitsverzeichnis abhängt:
+
+```ini
+ssl_cert_file = '/etc/postgresql/tls/server.crt'
+ssl_key_file  = '/etc/postgresql/tls/server.key'
+```
+
+Warum man das will, sagt 18.9.1: erlaubt das Datenverzeichnis Gruppen-Lesezugriff
+(üblich, damit ein unprivilegierter Benutzer sichern kann), dann passen die
+Zertifikatsdateien dort nicht mehr zu den Anforderungen — sie gehören dann an einen
+Ort, den nur der Server-Benutzer lesen kann.
+
+**3. Auf der Client-Seite** gibt es dieselbe Zweiteilung: Vorgabepfade unter
+`~/.postgresql/` (26.3), überschreibbar per Verbindungsparameter bzw.
+Umgebungsvariable — `sslrootcert`, `sslcert`, `sslkey` (26.5, 26.7).
+
+Wer sie lesen können muss — und mit welchen Rechten:
+
+| Datei | wer liest sie | Rechte |
+|-------|---------------|--------|
+| `server.crt` | der **Server**prozess | `0644` genügt — ein Zertifikat ist öffentlich |
+| `server.key` | der **Server**prozess | **`0600`** — oder `root` mit `0640`, dann muss der Server-Benutzer in der Gruppe sein |
+| `root.crt` (Client) | der **Client**-Benutzer | `0644` genügt |
+| `postgresql.key` (Client) | der **Client**-Benutzer | **`0600`** |
+
+Der Merksatz über der Tabelle: **das Zertifikat ist kein Geheimnis, der Schlüssel
+ist eines.** Deshalb stehen die strengen Rechte nur bei den `.key`-Dateien — und
+deshalb prüft der Server genau dort.
+
+Und wer mit **Eigentümer** gemeint ist: der **Betriebssystem**-Benutzer, unter dem
+der Server läuft — nicht der Datenbank-Superuser aus Teil 24. Das ist auf dieser
+Seite die häufigste Verwechslung: `postgres` als OS-Konto und `kurs` als
+Datenbankrolle sind zwei verschiedene Dinge (Kasten oben, 26.10).
+
+**Der Inhalt gehört dazu: die Reihenfolge in der Datei.** In `server.crt` muss das
+**Server-Zertifikat die erste** Zertifikat-Zeile sein (es muss zum Schlüssel
+passen); Zwischenzertifikate dürfen angehängt werden. Beim Client gilt dasselbe für
+`root.crt`: die Kette muss sich lesen lassen, sonst schlägt `verify-ca` fehl —
+obwohl die Datei doch da ist.
+
+**Und wenn es falsch liegt?** Zwei Fehlerbilder, die man unterscheiden sollte:
+
+- beim **Start**: der Server startet nicht, mit einer Meldung im Log;
+- beim **Reload**: er behält die **alte** TLS-Konfiguration bei und schreibt den
+  Fehler ins Log (26.1).
+
+In beiden Fällen ist das Log die Auskunft. `SHOW ssl;` sagt nur, wie der Schalter
+steht — nicht, ob die Dateien gelesen werden konnten.
+
+Die Kontrolle nach dem Hinterlegen:
+
+```sql
+SHOW ssl_cert_file;
+SHOW ssl_key_file;
+SELECT pg_reload_conf();
+```
+
+```bash
+ls -l /etc/postgresql/tls/server.crt /etc/postgresql/tls/server.key   # Eigentümer und Rechte
+```
+
+Und dann ins Log — nicht ins Bauchgefühl.
+
+---
+
 ## 26.4 Ist es wirklich an?
 
 Drei Nachweise, vom Allgemeinen zum Konkreten. Erst der Schalter, dann diese
@@ -210,9 +287,10 @@ SHOW ssl;
 ```
 
 Bei einer verschlüsselten Verbindung ergänzt `\conninfo` eine Zeile, die
-**Protokollversion und Cipher** dieser Sitzung nennt. Fehlt die Zeile, ist die
-Sitzung nicht verschlüsselt — und dafür gibt es zwei harmlose Erklärungen, an die
-man zuerst denkt:
+**Protokollversion, Cipher und weitere Angaben zur Sitzung** nennt — je nach
+Client-Version auch `compression` und `ALPN`. Fehlt die Zeile, ist die Sitzung
+nicht verschlüsselt — und dafür gibt es zwei harmlose Erklärungen, an die man
+zuerst denkt:
 
 - **Du bist über den Unix-Socket verbunden.** TLS gilt für TCP; eine
   Socket-Verbindung hat gar keine TLS-Schicht. `\conninfo` sagt dir, welcher Fall
@@ -370,6 +448,7 @@ wo es hingehört.**
 | Verbindung scheitert **nur** mit `verify-full` | Name in `-h` passt nicht zu SAN/CN des Zertifikats | das Zertifikat (`-text`), 26.2, 26.5 |
 | `verify-ca`/`verify-full` scheitert immer | kein Root-Zertifikat auf dem Client, oder das falsche | `~/.postgresql/root.crt`, `sslrootcert` (26.5) |
 | „no pg_hba.conf entry …, **no encryption**" | es passt nur eine `hostssl`-Zeile, der Client kam ohne TLS | Datei von oben nach unten (25.3a), `sslmode` (26.6) |
+| dieselbe Meldung mit „**SSL encryption**“ | die Verbindung **war** verschlüsselt — es fehlt die Zeile für **diesen Benutzer** oder diese Adresse | Datei von oben nach unten, alle vier Spalten (25.3a), 25.6 |
 | Server fragt beim Start nach einem Passwort | der private Schlüssel hat eine Passphrase (nicht `-nodes`) | `ssl_passphrase_command` (26.2) |
 | Client-Zertifikat wird nicht benutzt | es wird keines **verlangt** — TLS braucht keine Client-Zertifikate | `client_dn` leer in `pg_stat_ssl` (26.4), 26.7 |
 | `ssl = on` geändert, aber kein Neustart gemacht | für `ssl` reicht der Reload — aber nur, wenn die Dateien in Ordnung sind | `SELECT pg_reload_conf();`, Log |

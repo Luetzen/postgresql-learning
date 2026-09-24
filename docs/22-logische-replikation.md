@@ -187,8 +187,8 @@ und `pg_stat_replication_slots` auftaucht, und was auf dem Ziel nur in
 aus dem Gedächtnis ab, sondern sieht nach.
 
 > **Keine Zahlen in diesem Dokument.** Wie groß die Verzögerung ist und wie
-> lange die Startkopie dauert, steht nirgends hier — das misst du auf deinem
-> Rechner und trägst es in `06-kurs-notizen.md` ein.
+> lange die Startkopie dauert, steht nirgends hier — das hängt an deiner Maschine,
+> nicht an PostgreSQL.
 
 ---
 

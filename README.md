@@ -591,6 +591,10 @@ openssl req -new -x509 -days 365 -nodes -text -out server.crt \
 chmod og-rwx server.key
 ```
 
+Ein anderer Ort als das Datenverzeichnis geht über `ssl_cert_file` und
+`ssl_key_file` — samt der Frage, wem die Dateien gehören müssen und welche Rechte
+sie brauchen (26.3a).
+
 ```ini
 # postgresql.conf
 ssl = on

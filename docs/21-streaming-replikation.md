@@ -193,8 +193,8 @@ erst ankommen, dann anwenden. Zwischen beiden liegt das Fenster, in dem die
 Standby etwas *weiß*, was sie noch nicht *zeigt*.
 
 > **Keine Zahlen in diesem Dokument.** Wie groß die Lücken im Betrieb sind und
-> wie schnell das durchläuft, steht nirgends hier — das misst du auf deinem
-> Rechner und trägst es in `06-kurs-notizen.md` ein.
+> wie schnell das durchläuft, steht nirgends hier — das hängt an deiner Maschine,
+> nicht an PostgreSQL.
 
 ---
 

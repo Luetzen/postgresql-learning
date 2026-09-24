@@ -245,9 +245,9 @@ Zurück auf den Stand von vorher:
 DROP INDEX idx_kurs_cc;
 ```
 
-Fragen für `06-kurs-notizen.md`: wie lange lief der Build, bevor du abgebrochen
-hast? Wie groß war der invalide Index (`pg_indexes_size`)? Und was passiert,
-wenn du `REINDEX INDEX CONCURRENTLY` statt `DROP` + neu benutzt?
+Fragen dazu: wie lange lief der Build, bevor du abgebrochen hast? Wie groß war der
+invalide Index (`pg_indexes_size`)? Und was passiert, wenn du
+`REINDEX INDEX CONCURRENTLY` statt `DROP` + neu benutzt?
 
 ---
 

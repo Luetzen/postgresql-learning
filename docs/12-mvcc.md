@@ -233,7 +233,7 @@ Zwei praktische Konsequenzen:
 
 ---
 
-## 12.8 Übung für `06-kurs-notizen.md`
+## 12.8 Übung: eine zurückgerollte Transaktion und ihr `xmax`
 
 **Fenster B:**
 

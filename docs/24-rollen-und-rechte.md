@@ -166,8 +166,7 @@ Dieselbe Auskunft gibt es als `psql`-Kurzform — sie ist die bequemere der beid
 
 Die Frage, die sich beim ersten `\du` sofort aufdrängt: **welche Attribute stehen
 beim Superuser deiner Installation, und warum war `Replication` davon für Teil 21
-notwendig?** Trag deine `pg_roles`-Ausgabe in
-[`06-kurs-notizen.md`](06-kurs-notizen.md) ein.
+notwendig?**
 
 ---
 

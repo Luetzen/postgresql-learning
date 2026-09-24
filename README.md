@@ -67,6 +67,7 @@ docker compose version
 | 24 | [docs/24-rollen-und-rechte.md](docs/24-rollen-und-rechte.md) | `CREATE ROLE`/`CREATE USER`, die Rollenattribute, `GRANT`/`REVOKE`, `pg_hba.conf`, Mitgliedschaft und `SET ROLE`, vordefinierte Rollen |
 | 25 | [docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md) | `listen_addresses`, Port, `pg_hba.conf` für fremde Hosts, `pg_isready`, `\conninfo`, `client_addr` |
 | 26 | [docs/26-tls-verschluesselte-verbindungen.md](docs/26-tls-verschluesselte-verbindungen.md) | `ssl = on`, Zertifikat und Schlüssel mit `openssl`, Rechte, `pg_stat_ssl`, `sslmode`, `hostssl` |
+| 27 | [docs/27-eigentuemer-und-acl.md](docs/27-eigentuemer-und-acl.md) | Eigentümer versus Recht, `ALTER … OWNER TO`, `REASSIGN OWNED`/`DROP OWNED`, ACL-Zeichen lesen, `WITH GRANT OPTION`, Gruppen als Eigentümer |
 
 ---
 
@@ -627,6 +628,59 @@ Die drei Angriffe, `sslmode` in allen sechs Werten, `hostssl` und das Aufräumen
 
 ---
 
+## Schnellstart (Teil 27 — Eigentümer und Rechte)
+
+Zwei Fragen, zwei Befehle — `\dt` zeigt den Eigentümer, **nicht** die Rechte:
+
+```text
+\dt
+\dp tabelle
+```
+
+Ein Objekt gehört einer Rolle, und das ist kein Recht, sondern eine Zugehörigkeit:
+
+```sql
+ALTER TABLE tabelle OWNER TO accounting;
+```
+
+Deshalb hängt eine Rolle an ihren Objekten — die `DETAIL`-Zeile nennt das Objekt:
+
+```sql
+DROP ROLE sepp;
+-- ERROR: role "sepp" cannot be dropped because some objects depend on it
+-- DETAIL: owner of table tabelle
+```
+
+Aufräumen in der Reihenfolge aus Abschnitt 21.4 — **in jeder Datenbank**:
+
+```sql
+REASSIGN OWNED BY sepp TO accounting;
+DROP OWNED    BY sepp;
+DROP ROLE sepp;
+```
+
+Die Zeichenketten in der Spalte `Access privileges` (`=c/postgres`,
+`accounting=c/postgres`) lesen: Empfänger `=` Rechte `/` Geber, leeres Feld vor
+dem `=` heißt `PUBLIC`, ein `*` heißt `WITH GRANT OPTION`. Ungefiltert aus dem
+Katalog nachsehen:
+
+```sql
+SELECT datname, datacl FROM pg_database ORDER BY datname;
+SELECT grantor, grantee, privilege_type, is_grantable
+FROM aclexplode((SELECT datacl FROM pg_database WHERE datname = current_database()));
+```
+
+Und die Regel, die den ganzen Abschnitt abkürzt: **Objekte gehören Rollen ohne
+`LOGIN`, Personen sind nur Mitglieder.**
+
+Der komplette Durchlauf als Skript — Rollen, Übungstabelle, alle Abschnitte,
+Aufräumen am Ende — steht in [sql/07_rechte.sql](sql/07_rechte.sql).
+
+Die Besitz-Regel, Tabelle 5.1/5.2, `WITH GRANT OPTION` und die Aufgaben:
+[docs/27-eigentuemer-und-acl.md](docs/27-eigentuemer-und-acl.md)
+
+---
+
 ## Struktur
 
 ```
@@ -640,7 +694,8 @@ postgresql-learning/
 │   ├── 03_abfragen.sql
 │   ├── 04_konto.sql
 │   ├── 05_join_schema.sql
-│   └── 06_adresse.sql
+│   ├── 06_adresse.sql
+│   └── 07_rechte.sql
 └── scripts/
     └── insert-schleife.sh       # 40 × derselbe INSERT-Befehl
 ```

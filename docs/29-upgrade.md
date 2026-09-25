@@ -22,6 +22,8 @@ Die Doku-Kapitel, um die es geht:
 - https://www.postgresql.org/docs/18/app-pg-dumpall.html (globale Objekte, Weg B)
 - https://www.postgresql.org/docs/18/logical-replication.html (die Brücke, Weg C)
 - https://www.postgresql.org/support/versioning/ (Major gegen Minor)
+- https://www.postgresql.org/docs/release/ (die Release Notes — für die
+  **Zielversion** unter `/docs/<version>/release-<version>.html`)
 
 > **Zwei Umgebungen, dieselben Befehle.** Der Kurs arbeitet auf PostgreSQL **19**
 > — dort heißt das Datenverzeichnis `19/data` (dieselben Kapitel in der Doku:
@@ -195,6 +197,11 @@ Die Schalter, die den Weg bestimmen:
 > einen heilen alten Cluster, nimmt `--clone`, wenn das Dateisystem es hergibt:
 > derselbe Trick wie `--link`, nur ohne die Falle.
 
+Und die Voraussetzung, die `--link` stillschweigend annimmt: **das neue
+Verzeichnis muss auf demselben Dateisystem liegen.** Hardlinks über eine
+Dateisystemgrenze hinweg gibt es nicht — der Lauf bricht dann mit
+„Invalid cross-device link“ ab.
+
 Dann die Konfiguration — **das ist der Restore-Teil, den man vergisst.** `initdb`
 legt im neuen Cluster **Vorgabe**-Dateien an. Deine Einstellungen aus Teil 14
 liegen aber im alten Datenverzeichnis und kommen nicht mit:
@@ -316,12 +323,20 @@ Rückweg einzelner Objekte.
 
 | Phase | was passiert | Anschluss |
 |-------|--------------|-----------|
-| **vorher** | Backup ziehen, Inventur (29.2), `--check`, Zielversion installieren | Teil 20, 29.1, 29.2 |
+| **vorher** | Backup ziehen, Inventur (29.2), **Release Notes der Zielversion** lesen, `--check`, Zielversion installieren | Teil 20, 29.1, 29.2 |
 | **während** | alte Instanz stoppen, neuen Cluster `initdb`en, Daten umziehen (A/B/C) | 29.3, 29.4, 29.5 |
 | **nachher** | starten, `ANALYZE`, Erweiterungen prüfen (`\dx`), ggf. `REINDEX`, erst dann umschalten | 29.6 unten |
 | **zuletzt** | alten Cluster löschen — **wenn** du die Sicherung hast | 29.8 |
 
-Der „nachher"-Block ist der, den man überspringt, weil die Instanz ja schon
+Ein Schritt, der in keiner Anschluss-Spalte steht: **die Release Notes der
+Zielversion lesen.** Nicht die Feature-Liste — der Abschnitt **„Migration to
+Version N“** darin. Er ist die offizielle Antwort auf „was verhält sich jetzt
+anders, was ist weggefallen, was muss ich nach dem Umzug nachziehen“. Genau die
+Änderungen, die einen sonst nachts überraschen. Die Seite der Zielversion steht
+oben in der Verweis-Liste, alle Versionen sammelt
+https://www.postgresql.org/docs/release/ .
+
+Der „nachher“-Block ist der, den man überspringt, weil die Instanz ja schon
 antwortet. Die drei Handgriffe darin:
 
 ```sql

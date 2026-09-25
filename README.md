@@ -735,8 +735,9 @@ sich) oder **Minor** (18.6 → 18.7, nur neue Binärdateien)?
 SELECT version();
 ```
 
-Nur der Major-Sprung braucht den Umzug. Der Standardweg (`pg_upgrade`) in Kurzform
-— beide Binärsätze müssen **gleichzeitig** vorhanden sein:
+Nur der Major-Sprung braucht den Umzug — und vorher die **Release Notes der
+Zielversion** (Abschnitt „Migration to Version N"). Der Standardweg (`pg_upgrade`)
+in Kurzform — beide Binärsätze müssen **gleichzeitig** vorhanden sein:
 
 ```bash
 # alte Instanz stoppen, leeren Ziel-Cluster mit der NEUEN Version anlegen

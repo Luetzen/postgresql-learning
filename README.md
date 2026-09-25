@@ -739,6 +739,8 @@ Nur der Major-Sprung braucht den Umzug. Der Standardweg (`pg_upgrade`) in Kurzfo
 docker compose exec -u postgres -T db pg_ctl -D /var/lib/postgresql/18/docker stop
 docker compose exec -u postgres -T db /usr/lib/postgresql/19/bin/initdb -D /var/lib/postgresql/19/data
 
+# initdb legt VORGABE-Config an — postgresql.conf und pg_hba.conf aus 18 hinüberkopieren (29.3)
+
 # erst trocken prüfen, dann umziehen (--link schnell, --copy konservativ)
 docker compose exec -u postgres -T db /usr/lib/postgresql/19/bin/pg_upgrade \
     -b /usr/lib/postgresql/18/bin -B /usr/lib/postgresql/19/bin \
@@ -755,9 +757,10 @@ docker compose exec -u postgres -T db pg_ctl -D /var/lib/postgresql/19/data -o "
 docker compose exec -u postgres -T db vacuumdb -p 5433 --all --analyze-in-stages
 ```
 
-Die Inventur vorher (Erweiterungen, Tablespaces, offene Transaktionen), die
-Alternative über Dump, die Replikations-Brücke und die `--link`-Falle Schritt für
-Schritt: [docs/29-upgrade.md](docs/29-upgrade.md)
+Die Inventur vorher (Erweiterungen, Tablespaces, offene Transaktionen), der
+Ausfall-Vergleich der drei Wege, die Alternative über Dump, die
+Replikations-Brücke und die `--link`/`--clone`-Falle Schritt für Schritt:
+[docs/29-upgrade.md](docs/29-upgrade.md)
 
 ---
 

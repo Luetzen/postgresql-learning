@@ -68,6 +68,7 @@ docker compose version
 | 25 | [docs/25-verbindungen-von-aussen.md](docs/25-verbindungen-von-aussen.md) | `listen_addresses`, Port, `pg_hba.conf` für fremde Hosts, `pg_isready`, `\conninfo`, `client_addr` |
 | 26 | [docs/26-tls-verschluesselte-verbindungen.md](docs/26-tls-verschluesselte-verbindungen.md) | `ssl = on`, Zertifikat und Schlüssel mit `openssl`, Rechte, `pg_stat_ssl`, `sslmode`, `hostssl` |
 | 27 | [docs/27-eigentuemer-und-acl.md](docs/27-eigentuemer-und-acl.md) | Eigentümer versus Recht, `ALTER … OWNER TO`, `REASSIGN OWNED`/`DROP OWNED`, ACL-Zeichen lesen, `WITH GRANT OPTION`, Gruppen als Eigentümer |
+| 28 | [docs/28-rechte-gezielt-setzen.md](docs/28-rechte-gezielt-setzen.md) | Eigenes Schema, `GRANT USAGE`, `ALTER DEFAULT PRIVILEGES` (Zeile für Zeile), Read-only-Rolle, `\ddp`, Sequenzen als eigene Zeile |
 
 ---
 
@@ -678,6 +679,45 @@ Aufräumen am Ende — steht in [sql/07_rechte.sql](sql/07_rechte.sql).
 
 Die Besitz-Regel, Tabelle 5.1/5.2, `WITH GRANT OPTION` und die Aufgaben:
 [docs/27-eigentuemer-und-acl.md](docs/27-eigentuemer-und-acl.md)
+
+---
+
+## Schnellstart (Teil 28 — Rechte gezielt setzen)
+
+Ein neues Schema ist von Haus aus zu; die drei Stufen der Reihe nach:
+
+```sql
+CREATE SCHEMA IF NOT EXISTS myapp;
+
+GRANT CONNECT ON DATABASE kurs TO readonly;    -- 1. in die Datenbank
+GRANT USAGE   ON SCHEMA   myapp TO readonly;   -- 2. das Schema benutzen
+```
+
+Und dann die zwei Hälften, die man verwechselt — **jetzt** gegen **künftig**:
+
+```sql
+-- was schon da ist (Momentaufnahme)
+GRANT SELECT ON ALL TABLES IN SCHEMA myapp TO readonly;
+
+-- was danach entsteht (Vorlage) — die Rolle heißt in diesem Container `kurs`
+ALTER DEFAULT PRIVILEGES FOR ROLE kurs IN SCHEMA myapp
+    GRANT SELECT ON TABLES TO readonly;
+```
+
+Nachsehen — Vorgaberechte sieht man nur hier:
+
+```text
+\ddp
+\dn+ myapp
+\dp
+```
+
+Den Beweis, dass die Vorlage greift, liefert eine neue Tabelle: anlegen, `\dp`
+— die Spalte ist **nicht** leer.
+
+`FOR ROLE` (wer legt die Tabellen wirklich an), `IN SCHEMA`, die Sequenzen als
+eigene Zeile und die Verbindung zu `DROP ROLE`:
+[docs/28-rechte-gezielt-setzen.md](docs/28-rechte-gezielt-setzen.md)
 
 ---
 

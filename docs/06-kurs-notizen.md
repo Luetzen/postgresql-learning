@@ -29,6 +29,7 @@ Bereits als eigenes Dokument angelegt:
 - [25 — Verbindungen von außen: `listen_addresses`, Port, `pg_hba.conf`](25-verbindungen-von-aussen.md)
 - [26 — TLS: verschlüsselte Verbindungen (`ssl = on`, Zertifikate, `sslmode`)](26-tls-verschluesselte-verbindungen.md)
 - [27 — Eigentümer, ACL und `GRANT OPTION`](27-eigentuemer-und-acl.md)
+- [28 — Rechte gezielt setzen: Schema, Read-only-Rolle, Vorgaberechte](28-rechte-gezielt-setzen.md)
 
 ---
 

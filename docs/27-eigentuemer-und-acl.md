@@ -450,7 +450,8 @@ Zwei Sätze aus deinen Notizen, die beide stimmen, aber nicht dasselbe meinen:
   aussehen, aber keine sind: `GRANT … ON ALL TABLES IN SCHEMA …` ist eine
   **Momentaufnahme** (nur die jetzt existierenden Objekte, 24.6), und
   `ALTER DEFAULT PRIVILEGES` ist eine **Vorlage**, die beim `CREATE` angewendet
-  wird — keine Regel auf einem Elternobjekt.
+  wird — keine Regel auf einem Elternobjekt. Die Vorlage ist ein eigenes Thema:
+  [Teil 28](28-rechte-gezielt-setzen.md).
 - **„Jedes Objekt bekommt sein eigenes."** Richtig — und zugleich ist die ACL
   **additiv**: was über `PUBLIC`, über eigene Grants und über Rollen-
   Mitgliedschaften zusammenkommt, addiert sich (24.3). Ein `REVOKE` an einer
@@ -495,9 +496,9 @@ PostgreSQL selbst eingebaut: das Schema `public` gehört der Rolle
 `pg_database_owner`, in die sich niemand einloggt (24.7). Das ist genau dieselbe
 Idee, nur vom System vorgemacht.
 
-Für Objekte, die künftig entstehen, kommt `ALTER DEFAULT PRIVILEGES` dazu (24.6)
-— es regelt **Rechte**, nicht Eigentum: neue Tabellen gehören weiterhin dem, der
-sie anlegt.
+Für Objekte, die künftig entstehen, kommt `ALTER DEFAULT PRIVILEGES` dazu (24.6,
+[Teil 28](28-rechte-gezielt-setzen.md)) — es regelt **Rechte**, nicht Eigentum:
+neue Tabellen gehören weiterhin dem, der sie anlegt.
 
 **Aufgabe.** Entscheide für `konto` (oder eine Tabelle deiner Wahl), wer sie in
 Zukunft besitzen soll — und begründe es, bevor du das `ALTER … OWNER TO`

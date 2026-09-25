@@ -224,6 +224,10 @@ FROM pg_settings
 WHERE name LIKE 'autovacuum%'
 ORDER BY name;
 
+-- ohne WHERE: alle Parameter; erst nach Kategorie gruppiert wird die Liste lesbar
+SELECT name, setting FROM pg_settings ORDER BY name;
+SELECT category, count(*) FROM pg_settings GROUP BY category ORDER BY category;
+
 ALTER SYSTEM SET autovacuum_naptime = '30s';
 SELECT pg_reload_conf();
 SHOW autovacuum_naptime;

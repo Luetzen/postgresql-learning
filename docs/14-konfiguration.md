@@ -105,6 +105,41 @@ Die drei Spalten, auf die es ankommt:
 `source` ist die Spalte, die man bei „das ist doch gesetzt!" aufruft: sie sagt,
 ob der Wert wirklich aus der Datei kommt oder noch die Vorgabe ist.
 
+### Alle Parameter — die ungefilterte Liste
+
+Ohne `WHERE` listet dieselbe Sicht **jeden** Parameter der Installation:
+
+```sql
+SELECT name, setting, unit FROM pg_settings ORDER BY name;
+```
+
+Das ist eine lange Liste — und ohne Ordnung kaum zu lesen. Die Spalte, die sie
+lesbar macht, sieht man sich deshalb am besten zuerst gruppiert an:
+
+```sql
+SELECT category, count(*) FROM pg_settings GROUP BY category ORDER BY category;
+```
+
+`category` ist die Einteilung, in der die Doku die Parameter führt („Autovacuum",
+„Client Connection Defaults", „Write-Ahead Log" …). Damit findest du die Gruppe,
+in der ein Parameter steckt, und siehst sie dann gezielt an:
+
+```sql
+SELECT name, setting, unit, context
+FROM pg_settings
+WHERE category LIKE 'Write-Ahead Log%'      -- Untergruppen wie „… / Archiving" mit
+ORDER BY name;
+```
+
+Zwei Dinge, die man beim Blick in die volle Liste mitnimmt:
+
+- **`name`/`setting` sind nicht alles.** Die zwei Spalten sind die halbe Antwort;
+  erst `context` (14.4), `source` (oben) und `pending_restart` machen daraus eine
+  Antwort auf „warum ist das so, und was passiert, wenn ich es ändere?".
+- **Die Liste ist versionsabhängig.** Zwischen zwei Major-Versionen kommen
+  Parameter dazu und fallen weg — ein Grund mehr, vor einem Upgrade in die
+  Release Notes zu sehen (Teil 29).
+
 ---
 
 ## 14.4 `context`: Reload oder Neustart?

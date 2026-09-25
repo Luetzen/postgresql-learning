@@ -30,6 +30,7 @@ Bereits als eigenes Dokument angelegt:
 - [26 — TLS: verschlüsselte Verbindungen (`ssl = on`, Zertifikate, `sslmode`)](26-tls-verschluesselte-verbindungen.md)
 - [27 — Eigentümer, ACL und `GRANT OPTION`](27-eigentuemer-und-acl.md)
 - [28 — Rechte gezielt setzen: Schema, Read-only-Rolle, Vorgaberechte](28-rechte-gezielt-setzen.md)
+- [29 — Upgrade: eine Major-Version weiter](29-upgrade.md)
 
 ---
 

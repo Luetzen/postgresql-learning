@@ -69,6 +69,7 @@ docker compose version
 | 26 | [docs/26-tls-verschluesselte-verbindungen.md](docs/26-tls-verschluesselte-verbindungen.md) | `ssl = on`, Zertifikat und Schlüssel mit `openssl`, Rechte, `pg_stat_ssl`, `sslmode`, `hostssl` |
 | 27 | [docs/27-eigentuemer-und-acl.md](docs/27-eigentuemer-und-acl.md) | Eigentümer versus Recht, `ALTER … OWNER TO`, `REASSIGN OWNED`/`DROP OWNED`, ACL-Zeichen lesen, `WITH GRANT OPTION`, Gruppen als Eigentümer |
 | 28 | [docs/28-rechte-gezielt-setzen.md](docs/28-rechte-gezielt-setzen.md) | Eigenes Schema, `GRANT USAGE`, `ALTER DEFAULT PRIVILEGES` (Zeile für Zeile), Read-only-Rolle, `\ddp`, Sequenzen als eigene Zeile |
+| 29 | [docs/29-upgrade.md](docs/29-upgrade.md) | Major gegen Minor, `pg_upgrade` (`--check`, `--link`/`--copy`), Dump-Weg, logische Replikation als Brücke, `ANALYZE` nach dem Umzug |
 
 ---
 
@@ -718,6 +719,45 @@ Den Beweis, dass die Vorlage greift, liefert eine neue Tabelle: anlegen, `\dp`
 `FOR ROLE` (wer legt die Tabellen wirklich an), `IN SCHEMA`, die Sequenzen als
 eigene Zeile und die Verbindung zu `DROP ROLE`:
 [docs/28-rechte-gezielt-setzen.md](docs/28-rechte-gezielt-setzen.md)
+
+---
+
+## Schnellstart (Teil 29 — Upgrade)
+
+Zuerst die Frage, die den Aufwand entscheidet — **Major** (18 → 19, Format ändert
+sich) oder **Minor** (18.6 → 18.7, nur neue Binärdateien)?
+
+```sql
+SELECT version();
+```
+
+Nur der Major-Sprung braucht den Umzug. Der Standardweg (`pg_upgrade`) in Kurzform
+— beide Binärsätze müssen **gleichzeitig** vorhanden sein:
+
+```bash
+# alte Instanz stoppen, leeren Ziel-Cluster mit der NEUEN Version anlegen
+docker compose exec -u postgres -T db pg_ctl -D /var/lib/postgresql/18/docker stop
+docker compose exec -u postgres -T db /usr/lib/postgresql/19/bin/initdb -D /var/lib/postgresql/19/data
+
+# erst trocken prüfen, dann umziehen (--link schnell, --copy konservativ)
+docker compose exec -u postgres -T db /usr/lib/postgresql/19/bin/pg_upgrade \
+    -b /usr/lib/postgresql/18/bin -B /usr/lib/postgresql/19/bin \
+    -d /var/lib/postgresql/18/docker -D /var/lib/postgresql/19/data --check
+docker compose exec -u postgres -T db /usr/lib/postgresql/19/bin/pg_upgrade \
+    -b /usr/lib/postgresql/18/bin -B /usr/lib/postgresql/19/bin \
+    -d /var/lib/postgresql/18/docker -D /var/lib/postgresql/19/data --link --jobs 4
+```
+
+Starten und die Statistik neu erzeugen (gehört zum Upgrade, nicht zum Feinschliff):
+
+```bash
+docker compose exec -u postgres -T db pg_ctl -D /var/lib/postgresql/19/data -o "-p 5433" start
+docker compose exec -u postgres -T db vacuumdb -p 5433 --all --analyze-in-stages
+```
+
+Die Inventur vorher (Erweiterungen, Tablespaces, offene Transaktionen), die
+Alternative über Dump, die Replikations-Brücke und die `--link`-Falle Schritt für
+Schritt: [docs/29-upgrade.md](docs/29-upgrade.md)
 
 ---
 
